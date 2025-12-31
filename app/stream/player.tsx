@@ -3,10 +3,6 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { StyleSheet, Platform, ActivityIndicator, View, Text, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ScreenOrientation from 'expo-screen-orientation';
-import {
-  defaultMovieUrlTemplate,
-  defaultTvShowUrlTemplate,
-} from '@/constants/Embed';
 
 interface Stream {
   name: string;
@@ -29,27 +25,27 @@ interface UpdateProgressEvent {
 
 const EmbedPlayer = () => {
   const { imdbid, tmdbid, name, type, season, episode } = useLocalSearchParams();
-  
+
   const [videoUrl, setVideoUrl] = useState<string>('');
-  const [movieUrlTemplate, setMovieUrlTemplate] = useState<string>(defaultMovieUrlTemplate);
-  const [seriesUrlTemplate, setSeriesUrlTemplate] = useState<string>(defaultTvShowUrlTemplate);
+  const [movieUrlTemplate, setMovieUrlTemplate] = useState<string>('');
+  const [seriesUrlTemplate, setSeriesUrlTemplate] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [progress, setProgress] = useState(0);
   const [currentPlayerType, setCurrentPlayerType] = useState<"native" | "vlc">("native");
   const [hasTriedNative, setHasTriedNative] = useState(false);
   const [streams, setStreams] = useState<Stream[]>([]);
-  const [currentStreamIndex, setCurrentStreamIndex] = useState<number>(0);
+  const [currentStreamIndex, setCurrentStreamIndex] = useState<number>(-1);
   const [isLoadingStreams, setIsLoadingStreams] = useState<boolean>(true);
 
   const artwork = `https://images.metahub.space/background/medium/${imdbid}/img`;
 
   const generateUrl = useCallback((
-    template: string, 
-    { imdbid, tmdbid, season = '1', episode = '1' }: { 
-      imdbid: string; 
-      tmdbid: string; 
-      season?: string; 
-      episode?: string; 
+    template: string,
+    { imdbid, tmdbid, season = '1', episode = '1' }: {
+      imdbid: string;
+      tmdbid: string;
+      season?: string;
+      episode?: string;
     }
   ) => {
     return template
@@ -77,8 +73,8 @@ const EmbedPlayer = () => {
         const storedSettings = await AsyncStorage.getItem('embedSettings');
         if (storedSettings) {
           const parsedSettings = JSON.parse(storedSettings);
-          setMovieUrlTemplate(parsedSettings.movie?.template ?? defaultMovieUrlTemplate);
-          setSeriesUrlTemplate(parsedSettings.tv?.template ?? defaultTvShowUrlTemplate);
+          setMovieUrlTemplate(parsedSettings.movie?.template ?? '');
+          setSeriesUrlTemplate(parsedSettings.tv?.template ?? '');
         }
       } catch (error) {
         console.error('Failed to load embed settings:', error);
@@ -107,17 +103,21 @@ const EmbedPlayer = () => {
   // Fetch streams from URL
   useEffect(() => {
     const fetchStreams = async () => {
-      if (!imdbid || !movieUrlTemplate && !seriesUrlTemplate) return;
+      if (!imdbid || (!movieUrlTemplate && !seriesUrlTemplate)) {
+        setIsLoadingStreams(false);
+        setIsLoading(false);
+        return;
+      }
 
       setIsLoadingStreams(true);
       try {
         let url = '';
-        if (type === 'movie') {
-          url = generateUrl(movieUrlTemplate, { 
-            imdbid: imdbid as string, 
-            tmdbid: tmdbid as string 
+        if (type === 'movie' && movieUrlTemplate) {
+          url = generateUrl(movieUrlTemplate, {
+            imdbid: imdbid as string,
+            tmdbid: tmdbid as string
           });
-        } else if (type === 'series' && season && episode) {
+        } else if (type === 'series' && season && episode && seriesUrlTemplate) {
           url = generateUrl(seriesUrlTemplate, {
             imdbid: imdbid as string,
             tmdbid: tmdbid as string,
@@ -128,7 +128,7 @@ const EmbedPlayer = () => {
 
         if (url) {
           console.log('Fetching streams from:', url);
-          
+
           try {
             const response = await fetch(url, {
               method: 'GET',
@@ -163,22 +163,14 @@ const EmbedPlayer = () => {
               console.error('JSON parse failed - treating as direct embed URL');
               throw new Error('PARSE_ERROR');
             }
-            
+
             if (data.streams && data.streams.length > 0) {
               console.log(`Found ${data.streams.length} streams`);
               setStreams(data.streams);
-              
-              // Set initial video URL from first stream
-              const firstStream = data.streams[0];
-              const streamUrl = firstStream.url || firstStream.embed || firstStream.magnet || firstStream.magnetLink || '';
-              
-              if (!streamUrl) {
-                throw new Error('First stream has no playable URL');
-              }
-              
-              console.log('Using stream URL:', streamUrl);
-              setVideoUrl(streamUrl);
-              setCurrentStreamIndex(0);
+
+              // DO NOT auto-select stream - let user choose
+              setVideoUrl(''); // Empty URL
+              setCurrentStreamIndex(-1); // No stream selected
             } else {
               console.log('No streams in response - treating as direct embed URL');
               throw new Error('NO_STREAMS');
@@ -186,7 +178,7 @@ const EmbedPlayer = () => {
           } catch (fetchError: any) {
             // If fetch fails or returns non-JSON, treat the URL as a direct embed URL
             console.log('Falling back to direct embed mode:', fetchError.message);
-            
+
             // Create a single "stream" from the URL itself
             const directStream: Stream = {
               name: 'Direct Embed',
@@ -194,10 +186,10 @@ const EmbedPlayer = () => {
               embed: url,
               url: url
             };
-            
+
             setStreams([directStream]);
-            setVideoUrl(url);
-            setCurrentStreamIndex(0);
+            setVideoUrl('');
+            setCurrentStreamIndex(-1);
           }
         }
       } catch (error: any) {
@@ -236,10 +228,10 @@ const EmbedPlayer = () => {
       const streamUrl = selectedStream.url || selectedStream.embed || selectedStream.magnet || selectedStream.magnetLink || '';
       setVideoUrl(streamUrl);
       setCurrentStreamIndex(index);
-      
+
       // Determine if it's a torrent/magnet link
       const isTorrent = !!(selectedStream.infoHash || selectedStream.magnet || selectedStream.magnetLink);
-      
+
       // If it's a torrent and we're not already using VLC, switch to VLC
       if (isTorrent && currentPlayerType === "native" && Platform.OS !== "web") {
         setCurrentPlayerType("vlc");
@@ -278,10 +270,10 @@ const EmbedPlayer = () => {
     );
   }
 
-  if (!videoUrl || streams.length === 0) {
+  if (streams.length === 0) {
     return (
       <View style={styles.container}>
-        <Text style={styles.errorText}>No streams available.</Text>
+        <Text style={styles.errorText}>No streams available. Please configure embed settings.</Text>
       </View>
     );
   }
@@ -290,7 +282,7 @@ const EmbedPlayer = () => {
     <View style={styles.container}>
       <Player
         videoUrl={videoUrl}
-        isTorrent={!!(streams[currentStreamIndex]?.infoHash || streams[currentStreamIndex]?.magnet || streams[currentStreamIndex]?.magnetLink)}
+        isTorrent={currentStreamIndex >= 0 ? !!(streams[currentStreamIndex]?.infoHash || streams[currentStreamIndex]?.magnet || streams[currentStreamIndex]?.magnetLink) : false}
         title={name}
         back={handleBack}
         progress={progress}

@@ -43,7 +43,7 @@ const useVLCPlayerState = () => {
     const [hasStartedPlaying, setHasStartedPlaying] = useState(false);
     const [isSeeking, setIsSeeking] = useState(false);
     const [availableAudioTracks, setAvailableAudioTracks] = useState<any[]>([]);
-    const [playerKey, setPlayerKey] = useState(0); // For forcing player remount
+    const [playerKey, setPlayerKey] = useState(0);
 
     return {
         ...baseState,
@@ -67,7 +67,7 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
     openSubtitlesClient,
     updateProgress,
     streams = [],
-    currentStreamIndex = 0,
+    currentStreamIndex = -1,
     onStreamChange
 }) => {
     const playerRef = useRef<VLCPlayer>(null);
@@ -90,6 +90,9 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
     const subtitleMenuRef = useRef<MenuComponentRef>(null);
     const speedMenuRef = useRef<MenuComponentRef>(null);
     const streamMenuRef = useRef<MenuComponentRef>(null);
+
+    // Check if no stream is selected or videoUrl is empty
+    const noStreamSelected = !videoUrl || currentStreamIndex < 0;
 
     const stateRefs = useRef({
         isPlaying: false,
@@ -127,6 +130,14 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
             }, CONSTANTS.CONTROLS_AUTO_HIDE_DELAY);
         }
     }, [animations.controlsOpacity, timers, uiState]);
+
+    // Show controls initially when no stream is selected
+    useEffect(() => {
+        if (noStreamSelected) {
+            uiState.setShowControls(true);
+            animations.controlsOpacity.setValue(1);
+        }
+    }, [noStreamSelected]);
 
     useEffect(() => {
         if (Platform.OS === "android") {
@@ -534,40 +545,42 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
 
     return (
         <View style={styles.container}>
-
-            <VLCPlayer
-                key={playerState.playerKey}
-                ref={playerRef}
-                style={[styles.video, {
-                    transform: [{ scale: zoom }]
-                }]}
-                source={{
-                    uri: videoUrl,
-                    initType: 2,
-                    initOptions: [
-                        '--no-sub-autodetect-file',
-                        '--no-spu'
-                    ]
-                }}
-                autoplay={true}
-                playInBackground={true}
-                autoAspectRatio={true}
-                resizeMode="cover"
-                textTrack={-1}
-                acceptInvalidCertificates={true}
-                rate={settings.playbackSpeed}
-                muted={settings.isMuted}
-                audioTrack={settings.selectedAudioTrack}
-                paused={playerState.isPaused}
-                onPlaying={vlcHandlers.onPlaying}
-                onProgress={vlcHandlers.onProgress}
-                onLoad={vlcHandlers.onLoad}
-                onBuffering={vlcHandlers.onBuffering}
-                onPaused={vlcHandlers.onPaused}
-                onStopped={vlcHandlers.onStopped}
-                onEnd={vlcHandlers.onEnd}
-                onError={vlcHandlers.onError}
-            />
+            {/* Only render VLCPlayer if a stream is selected */}
+            {!noStreamSelected && (
+                <VLCPlayer
+                    key={playerState.playerKey}
+                    ref={playerRef}
+                    style={[styles.video, {
+                        transform: [{ scale: zoom }]
+                    }]}
+                    source={{
+                        uri: videoUrl,
+                        initType: 2,
+                        initOptions: [
+                            '--no-sub-autodetect-file',
+                            '--no-spu'
+                        ]
+                    }}
+                    autoplay={true}
+                    playInBackground={true}
+                    autoAspectRatio={true}
+                    resizeMode="cover"
+                    textTrack={-1}
+                    acceptInvalidCertificates={true}
+                    rate={settings.playbackSpeed}
+                    muted={settings.isMuted}
+                    audioTrack={settings.selectedAudioTrack}
+                    paused={playerState.isPaused}
+                    onPlaying={vlcHandlers.onPlaying}
+                    onProgress={vlcHandlers.onProgress}
+                    onLoad={vlcHandlers.onLoad}
+                    onBuffering={vlcHandlers.onBuffering}
+                    onPaused={vlcHandlers.onPaused}
+                    onStopped={vlcHandlers.onStopped}
+                    onEnd={vlcHandlers.onEnd}
+                    onError={vlcHandlers.onError}
+                />
+            )}
 
             <ArtworkBackground
                 artwork={artwork}
@@ -576,7 +589,9 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
                 error={!!playerState.error}
             />
 
+
             <WaitingLobby
+                noStreamSelected={noStreamSelected}
                 hasStartedPlaying={playerState.hasStartedPlaying}
                 opacity={animations.bufferOpacity}
                 error={!!playerState.error}
@@ -584,10 +599,18 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
 
             <TouchableOpacity style={styles.touchArea} activeOpacity={1} onPress={handleOverlayPress} />
 
-            <SubtitleDisplay subtitle={subtitleState.currentSubtitle} error={!!playerState.error} />
+            {!noStreamSelected && (
+                <SubtitleDisplay subtitle={subtitleState.currentSubtitle} error={!!playerState.error} />
+            )}
 
             {uiState.showControls && (
-                <Animated.View style={[styles.controlsOverlay, { opacity: animations.controlsOpacity }]} pointerEvents="box-none">
+                <Animated.View
+                    style={[
+                        styles.controlsOverlay,
+                        { opacity: noStreamSelected ? 1 : animations.controlsOpacity }
+                    ]}
+                    pointerEvents="box-none"
+                >
                     <View style={styles.topControls}>
                         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
                             <Ionicons name="chevron-back" size={28} color="white" />
@@ -750,6 +773,7 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
                             </MenuView>
                         </View>
                     </View>
+
 
                     <CenterControls
                         isPlaying={playerState.isPlaying}

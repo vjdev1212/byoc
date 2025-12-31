@@ -379,22 +379,34 @@ export const handlePlaybackError = (error: any, message: string = "Unable to loa
 
 // Waiting Lobby Component
 export const WaitingLobby: React.FC<{
+    noStreamSelected: boolean;
     hasStartedPlaying: boolean;
     opacity: Animated.Value;
     error?: boolean;
-}> = ({ hasStartedPlaying, opacity, error }) => {
+}> = ({ noStreamSelected, hasStartedPlaying, opacity, error }) => {
     if (hasStartedPlaying || error) return null;
 
     return (
-        <Animated.View
-            style={[styles.bufferingContainer, { opacity }]}
-            pointerEvents="none"
-        >
-            <ActivityIndicator size="large" color="#535aff" />
-            <Text style={styles.bufferingText}>
-                {"Loading..."}
-            </Text>
-        </Animated.View>
+        noStreamSelected ? (
+            <Animated.View
+                style={[styles.bufferingContainer, { opacity }]}
+                pointerEvents="none"
+            >
+                <Text style={styles.bufferingText}>
+                    {"No stream found or selected"}
+                </Text>
+            </Animated.View >
+        ) : (
+            <Animated.View
+                style={[styles.bufferingContainer, { opacity }]}
+                pointerEvents="none"
+            >
+                <ActivityIndicator size="large" color="#535aff" />
+                <Text style={styles.bufferingText}>
+                    {"Loading..."}
+                </Text>
+            </Animated.View >
+        )
     );
 };
 
@@ -414,13 +426,7 @@ export const ArtworkBackground: React.FC<{
                 style={styles.artworkImage}
                 resizeMode="cover"
             />
-            <View style={styles.artworkOverlay} />
-            {isBuffering && (
-                <View style={styles.artworkLoadingOverlay}>
-                    <ActivityIndicator size="large" color="#535aff" />
-                    <Text style={styles.bufferingText}>Loading...</Text>
-                </View>
-            )}
+            <View style={styles.artworkOverlay} />            
         </View>
     );
 };
