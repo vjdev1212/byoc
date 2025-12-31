@@ -182,7 +182,7 @@ const SeriesDetails = () => {
         tmdbid: moviedbid,
         type: 'series',
         name: data.name,
-        title: `${data.namee} ${getFormattedName(data, season, episode)}`,
+        title: `${getFormattedName(data, season, episode)}`,
         season: season,
         episode: episode
       },
