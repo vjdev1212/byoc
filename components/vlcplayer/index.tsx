@@ -626,7 +626,7 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
                                             }
                                         }}
                                     >
-                                        <MaterialIcons name="video-library" size={24} color="white" />
+                                        <MaterialIcons name="ondemand-video" size={24} color="white" />
                                     </TouchableOpacity>
                                 </MenuView>
                             )}
