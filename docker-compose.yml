@@ -1,0 +1,11 @@
+version: '3.0'
+
+name: BYOC
+services:
+  byoc:
+    container_name: byoc
+    hostname: byoc
+    image: jarvisnexus/byoc:latest
+    ports:
+      - "4444:80"
+    restart: unless-stopped

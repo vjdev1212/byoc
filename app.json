@@ -1,0 +1,86 @@
+{
+  "expo": {
+    "name": "BYOC",
+    "slug": "byoc",
+    "version": "1.0.14",
+    "orientation": "default",
+    "icon": "assets/images/icon.png",
+    "scheme": "byoc",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
+    "ios": {
+      "icon": "assets/images/icon.png",
+      "supportsTablet": true,
+      "backgroundColor": "#000000",
+      "bundleIdentifier": "com.vijayyuvi.byoc",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true,
+          "NSAllowsLocalNetworking": true
+        }
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "assets/images/adaptive-icon.png",
+        "backgroundColor": "#000000"
+      },
+      "package": "com.vijayyuvi.byoc",
+      "icon": "assets/images/icon.png"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-video",
+      "expo-build-properties",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true,
+            "networkSecurityConfig": "@xml/network_security_config",
+            "minSdkVersion": 26,
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "buildToolsVersion": "35.0.0"
+          }
+        }
+      ],
+      "expo-web-browser"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "398e6419-70a8-4542-9092-48cd51167ddb"
+      }
+    },
+    "owner": "vijayvcm",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/398e6419-70a8-4542-9092-48cd51167ddb"
+    }
+  }
+}
