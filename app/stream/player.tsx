@@ -7,18 +7,14 @@ import {
   defaultMovieUrlTemplate,
   defaultTvShowUrlTemplate,
 } from '@/constants/Embed';
-import { Subtitle } from "@/components/coreplayer/models";
 
 
 interface UpdateProgressEvent {
   progress: number;
 }
 
-
-
-
 const EmbedPlayer = () => {
-  const { imdbid, tmdbid, type, season, episode } = useLocalSearchParams();
+  const { imdbid, tmdbid, name, type, season, episode } = useLocalSearchParams();
   
   const [videoUrl, setVideoUrl] = useState<string>('');
   const [movieUrlTemplate, setMovieUrlTemplate] = useState<string>(defaultMovieUrlTemplate);
@@ -177,7 +173,7 @@ const EmbedPlayer = () => {
       <Player
         videoUrl={videoUrl}
         isTorrent={false}
-        title={'Test'}
+        title={name}
         back={handleBack}
         progress={progress}
         artwork={artwork as string}
