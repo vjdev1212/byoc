@@ -120,40 +120,7 @@ const EmbedTvShowsSettingsScreen = () => {
                         <Text style={styles.hintText}>https://player.videasy.net/tv/{'{IMDBID}'}/{'{SEASON}'}/{'{EPISODE}'}</Text>
                     </View>
                 </View>
-
-                {/* AdGuard Section */}
-                <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Ad Blocking</Text>
-                        <Text style={styles.sectionSubtitle}>
-                            {Platform.OS === 'ios'
-                                ? 'Install AdGuard DNS profile to block ads and popups system-wide'
-                                : Platform.OS === 'android'
-                                    ? 'Configure Private DNS to block ads and popups system-wide'
-                                    : 'AdGuard is not available on web platform'}
-                        </Text>
-                    </View>
-
-                    {Platform.OS !== 'web' && (
-                        <Pressable
-                            style={({ pressed }) => [
-                                styles.adguardButton,
-                                pressed && styles.adguardButtonPressed
-                            ]}
-                            onPress={installAdGuard}
-                        >
-                            <Text style={styles.adguardButtonText}>
-                                {Platform.OS === 'ios' ? '📱 Install AdGuard Profile' : '⚙️ Setup AdGuard DNS'}
-                            </Text>
-                            <Text style={styles.adguardButtonSubtext}>
-                                {Platform.OS === 'ios'
-                                    ? 'Blocks ads and Popups'
-                                    : 'Configure Private DNS settings'}
-                            </Text>
-                        </Pressable>
-                    )}                    
-                </View>
-
+            
                 {/* Save Button */}
                 <Pressable 
                     style={({ pressed }) => [
@@ -230,29 +197,7 @@ const styles = StyleSheet.create({
         color: '#888',
         fontFamily: 'monospace',
         marginTop: 2,
-    },
-    adguardButton: {
-        backgroundColor: '#1a1a1a',
-        paddingVertical: 16,
-        paddingHorizontal: 20,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: '#2a2a2a',
-    },
-    adguardButtonPressed: {
-        backgroundColor: '#252525',
-        transform: [{ scale: 0.98 }],
-    },
-    adguardButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '500',
-        marginBottom: 4,
-    },
-    adguardButtonSubtext: {
-        color: '#888',
-        fontSize: 13,
-    },
+    },    
     saveButton: {
         backgroundColor: '#535aff',
         paddingVertical: 16,
