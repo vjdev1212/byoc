@@ -24,7 +24,7 @@ interface UpdateProgressEvent {
 }
 
 const EmbedPlayer = () => {
-  const { imdbid, tmdbid, name, type, season, episode } = useLocalSearchParams();
+  const { imdbid, tmdbid, name, title, type, season, episode } = useLocalSearchParams();
 
   const [videoUrl, setVideoUrl] = useState<string>('');
   const [movieUrlTemplate, setMovieUrlTemplate] = useState<string>('');
@@ -279,7 +279,7 @@ const EmbedPlayer = () => {
       <Player
         videoUrl={videoUrl}
         isTorrent={currentStreamIndex >= 0 ? !!(streams[currentStreamIndex]?.infoHash || streams[currentStreamIndex]?.magnet || streams[currentStreamIndex]?.magnetLink) : false}
-        title={name}
+        title={title}
         back={handleBack}
         progress={progress}
         artwork={artwork as string}

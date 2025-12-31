@@ -69,6 +69,7 @@ const SeriesDetails = () => {
             logo: logo,
             genre: result.genres.map((genre: any) => genre.name),
             released: result.first_air_date,
+            year: result.release_date?.split('-')[0],
             country: result.origin_country,
             languages: result.spoken_languages,
             status: result.status,
@@ -176,7 +177,15 @@ const SeriesDetails = () => {
   const handleEpisodeSelect = (season: number, episode: number) => {
     router.push({
       pathname: '/stream/player',
-      params: { imdbid: imdbid, tmdbid: moviedbid, type: 'series', name: data.name, season: season, episode: episode },
+      params: {
+        imdbid: imdbid,
+        tmdbid: moviedbid,
+        type: 'series',
+        name: data.name,
+        title: `${data.namee} ${getFormattedName(data, season, episode)}`,
+        season: season,
+        episode: episode
+      },
     });
   };
 
