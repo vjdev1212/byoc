@@ -240,10 +240,6 @@ const EmbedPlayer = () => {
   }, [streams, currentPlayerType]);
 
   const Player = React.useMemo(() => {
-    if (Platform.OS === "web") {
-      return require("@/components/nativeplayer").MediaPlayer;
-    }
-
     if (currentPlayerType === "vlc") {
       return require("@/components/vlcplayer").MediaPlayer;
     }
