@@ -1,5 +1,4 @@
 import * as Haptics from 'expo-haptics';
-import { Platform } from 'react-native';
 
 interface CodecInfo {
     videoCodec?: string;

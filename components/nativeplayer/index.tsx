@@ -7,7 +7,7 @@ import { MenuComponentRef, MenuView } from '@react-native-menu/menu';
 import { WebMenu } from "@/components/WebMenuView";
 import { styles } from "../coreplayer/styles";
 import { playHaptic } from "../coreplayer/utils";
-import { usePlayerState, useSubtitleState, useUIState, usePlayerSettings, useTimers, usePlayerAnimations, hideControls, CONSTANTS, loadSubtitle, handleSubtitleError, findActiveSubtitle, calculateProgress, performSeek, buildSpeedActions, buildSubtitleActions, buildAudioActions, buildStreamActions, calculateSliderValues, ArtworkBackground, WaitingLobby, SubtitleDisplay, CenterControls, ProgressBar, ContentFitLabel, SubtitleSource, ErrorDisplay, ExtendedMediaPlayerProps } from "../coreplayer";
+import { usePlayerState, useSubtitleState, useUIState, usePlayerSettings, useTimers, usePlayerAnimations, hideControls, CONSTANTS, loadSubtitle, handleSubtitleError, findActiveSubtitle, calculateProgress, performSeek, buildSpeedActions, buildSubtitleActions, buildAudioActions, calculateSliderValues, ArtworkBackground, WaitingLobby, SubtitleDisplay, CenterControls, ProgressBar, ContentFitLabel, SubtitleSource, ErrorDisplay, ExtendedMediaPlayerProps } from "../coreplayer";
 import { View, Text } from "../Themed";
 
 // Menu wrapper component - uses CustomMenu on web, MenuView on native
@@ -523,8 +523,6 @@ export const MediaPlayer: React.FC<ExtendedMediaPlayerProps> = ({
         player.availableAudioTracks,
         settings.selectedAudioTrack
     ), [player.availableAudioTracks, settings.selectedAudioTrack]);
-    const streamActions = useMemo(() => buildStreamActions(streams, currentStreamIndex), [streams, currentStreamIndex]);
-
     // Memoize slider values
     const { displayTime, sliderValue } = useMemo(() => calculateSliderValues(
         playerState.isDragging,
@@ -670,29 +668,7 @@ export const MediaPlayer: React.FC<ExtendedMediaPlayerProps> = ({
                             <Text style={styles.titleText} numberOfLines={1}>{title}</Text>
                         </View>
 
-                        <View style={styles.topRightControls}>
-                            {streams.length > 1 && (
-                                <MenuWrapper
-                                    style={{ zIndex: 1000 }}
-                                    ref={streamMenuRef}
-                                    title="Select Stream"
-                                    onPressAction={Platform.OS === 'web' ? handleWebStreamAction : handleNativeStreamAction}
-                                    actions={streamActions}
-                                    shouldOpenOnLongPress={false}
-                                    themeVariant="dark"
-                                    onOpenMenu={handleMenuOpen}
-                                    onCloseMenu={handleMenuClose}
-                                >
-                                    <TouchableOpacity style={styles.controlButton} onPress={() => {
-                                        if (Platform.OS === 'android') {
-                                            streamMenuRef.current?.show();
-                                        }
-                                    }}>
-                                        <MaterialIcons name="ondemand-video" size={24} color="white" />
-                                    </TouchableOpacity>
-                                </MenuWrapper>
-                            )}
-
+                        <View style={styles.topRightControls}>                            
                             <TouchableOpacity style={styles.controlButton} onPress={handleMuteToggle}>
                                 <Ionicons name={settings.isMuted ? "volume-mute" : "volume-high"} size={24} color="white" />
                             </TouchableOpacity>
