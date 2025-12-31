@@ -168,9 +168,14 @@ const EmbedPlayer = () => {
               console.log(`Found ${data.streams.length} streams`);
               setStreams(data.streams);
 
-              // DO NOT auto-select stream - let user choose
-              setVideoUrl(''); // Empty URL
-              setCurrentStreamIndex(-1); // No stream selected
+              if (streams.length == 1) {
+                setVideoUrl(data.streams[0].url ?? '');
+                setCurrentStreamIndex(0);
+              }
+              else {
+                setVideoUrl('');
+                setCurrentStreamIndex(-1);
+              }
             } else {
               console.log('No streams in response - treating as direct embed URL');
               throw new Error('NO_STREAMS');
