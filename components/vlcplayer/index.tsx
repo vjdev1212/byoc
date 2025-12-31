@@ -32,6 +32,7 @@ import {
     useTimers,
     useUIState,
     ExtendedMediaPlayerProps,
+    buildStreamActions,
 } from "../coreplayer";
 
 const useVLCPlayerState = () => {
@@ -54,17 +55,6 @@ const useVLCPlayerState = () => {
         availableAudioTracks, setAvailableAudioTracks,
         playerKey, setPlayerKey
     };
-};
-
-// Helper function to build stream actions for menu
-const buildStreamActions = (streams: any[], currentIndex: number) => {
-    return streams.map((stream, index) => ({
-        id: `stream-${index}`,
-        title: stream.title || stream.name || `Stream ${index + 1}`,
-        subtitle: stream.name || undefined,
-        state: currentIndex === index ? ('on' as const) : undefined,
-        titleColor: currentIndex === index ? '#007AFF' : '#FFFFFF',
-    }));
 };
 
 const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
