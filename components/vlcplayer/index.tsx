@@ -17,7 +17,6 @@ import {
     calculateSliderValues,
     CenterControls,
     CONSTANTS,
-    ErrorDisplay,
     findActiveSubtitle,
     handleSubtitleError,
     hideControls,
@@ -43,6 +42,7 @@ const useVLCPlayerState = () => {
     const [hasStartedPlaying, setHasStartedPlaying] = useState(false);
     const [isSeeking, setIsSeeking] = useState(false);
     const [availableAudioTracks, setAvailableAudioTracks] = useState<any[]>([]);
+    const [playerKey, setPlayerKey] = useState(0); // For forcing player remount
 
     return {
         ...baseState,
@@ -51,7 +51,8 @@ const useVLCPlayerState = () => {
         showBufferingLoader, setShowBufferingLoader,
         hasStartedPlaying, setHasStartedPlaying,
         isSeeking, setIsSeeking,
-        availableAudioTracks, setAvailableAudioTracks
+        availableAudioTracks, setAvailableAudioTracks,
+        playerKey, setPlayerKey
     };
 };
 
@@ -484,11 +485,26 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
 
     const handleStreamSelect = useCallback(async (index: number) => {
         await playHaptic();
+        
+        // Reset player state for stream change
+        playerState.setIsReady(false);
+        playerState.setIsBuffering(true);
+        playerState.setHasStartedPlaying(false);
+        playerState.setCurrentTime(0);
+        playerState.setDuration(0);
+        playerState.setIsPaused(false);
+        playerState.setIsPlaying(false);
+        progressBarValue.setValue(0);
+        
+        // Force player remount by changing key
+        playerState.setPlayerKey(prev => prev + 1);
+        
         if (onStreamChange) {
             onStreamChange(index);
         }
+        
         showControlsTemporarily();
-    }, [onStreamChange, showControlsTemporarily]);
+    }, [onStreamChange, showControlsTemporarily, playerState, progressBarValue]);
 
     const speedActions = useMemo(() =>
         buildSpeedActions(settings.playbackSpeed),
@@ -530,6 +546,7 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
         <View style={styles.container}>
             {!playerState.error && (
                 <VLCPlayer
+                    key={playerState.playerKey}
                     ref={playerRef}
                     style={[styles.video, {
                         transform: [{ scale: zoom }]
@@ -562,17 +579,6 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
                     onError={vlcHandlers.onError}
                 />
             )}
-
-            <ErrorDisplay
-                error={playerState.error}
-                onBack={handleBack}
-                onRetry={() => {
-                    playerState.setError(null);
-                    playerState.setIsReady(false);
-                    playerState.setIsBuffering(true);
-                    playerState.setHasStartedPlaying(false);
-                }}
-            />
 
             <ArtworkBackground
                 artwork={artwork}
