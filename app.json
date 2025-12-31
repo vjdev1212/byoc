@@ -2,7 +2,7 @@
   "expo": {
     "name": "BYOC",
     "slug": "byoc",
-    "version": "1.0.14",
+    "version": "1.0.0",
     "orientation": "default",
     "icon": "assets/images/icon.png",
     "scheme": "byoc",
