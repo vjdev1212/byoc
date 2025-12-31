@@ -136,7 +136,7 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
                 hideControls(uiState.setShowControls, animations.controlsOpacity);
             }, CONSTANTS.CONTROLS_AUTO_HIDE_DELAY);
         }
-    }, [animations.controlsOpacity, timers, uiState]);   
+    }, [animations.controlsOpacity, timers, uiState]);
 
     useEffect(() => {
         if (Platform.OS === "android") {
@@ -199,7 +199,7 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
 
         const updateSubtitle = () => {
             if (!stateRefs.current.isPlaying) return;
-            
+
             const text = findActiveSubtitle(stateRefs.current.currentTime, subtitleState.parsedSubtitles);
             if (subtitleState.currentSubtitle !== text) {
                 subtitleState.setCurrentSubtitle(text);
@@ -485,7 +485,7 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
 
     const handleStreamSelect = useCallback(async (index: number) => {
         await playHaptic();
-        
+
         // Reset player state for stream change
         playerState.setIsReady(false);
         playerState.setIsBuffering(true);
@@ -495,14 +495,14 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
         playerState.setIsPaused(false);
         playerState.setIsPlaying(false);
         progressBarValue.setValue(0);
-        
+
         // Force player remount by changing key
         playerState.setPlayerKey(prev => prev + 1);
-        
+
         if (onStreamChange) {
             onStreamChange(index);
         }
-        
+
         showControlsTemporarily();
     }, [onStreamChange, showControlsTemporarily, playerState, progressBarValue]);
 
@@ -544,41 +544,40 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
 
     return (
         <View style={styles.container}>
-            {!playerState.error && (
-                <VLCPlayer
-                    key={playerState.playerKey}
-                    ref={playerRef}
-                    style={[styles.video, {
-                        transform: [{ scale: zoom }]
-                    }]}
-                    source={{
-                        uri: videoUrl,
-                        initType: 2,
-                        initOptions: [
-                            '--no-sub-autodetect-file',
-                            '--no-spu'
-                        ]
-                    }}
-                    autoplay={true}
-                    playInBackground={true}
-                    autoAspectRatio={true}
-                    resizeMode="cover"
-                    textTrack={-1}
-                    acceptInvalidCertificates={true}
-                    rate={settings.playbackSpeed}
-                    muted={settings.isMuted}
-                    audioTrack={settings.selectedAudioTrack}
-                    paused={playerState.isPaused}
-                    onPlaying={vlcHandlers.onPlaying}
-                    onProgress={vlcHandlers.onProgress}
-                    onLoad={vlcHandlers.onLoad}
-                    onBuffering={vlcHandlers.onBuffering}
-                    onPaused={vlcHandlers.onPaused}
-                    onStopped={vlcHandlers.onStopped}
-                    onEnd={vlcHandlers.onEnd}
-                    onError={vlcHandlers.onError}
-                />
-            )}
+
+            <VLCPlayer
+                key={playerState.playerKey}
+                ref={playerRef}
+                style={[styles.video, {
+                    transform: [{ scale: zoom }]
+                }]}
+                source={{
+                    uri: videoUrl,
+                    initType: 2,
+                    initOptions: [
+                        '--no-sub-autodetect-file',
+                        '--no-spu'
+                    ]
+                }}
+                autoplay={true}
+                playInBackground={true}
+                autoAspectRatio={true}
+                resizeMode="cover"
+                textTrack={-1}
+                acceptInvalidCertificates={true}
+                rate={settings.playbackSpeed}
+                muted={settings.isMuted}
+                audioTrack={settings.selectedAudioTrack}
+                paused={playerState.isPaused}
+                onPlaying={vlcHandlers.onPlaying}
+                onProgress={vlcHandlers.onProgress}
+                onLoad={vlcHandlers.onLoad}
+                onBuffering={vlcHandlers.onBuffering}
+                onPaused={vlcHandlers.onPaused}
+                onStopped={vlcHandlers.onStopped}
+                onEnd={vlcHandlers.onEnd}
+                onError={vlcHandlers.onError}
+            />
 
             <ArtworkBackground
                 artwork={artwork}
@@ -597,7 +596,7 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
 
             <SubtitleDisplay subtitle={subtitleState.currentSubtitle} error={!!playerState.error} />
 
-            {uiState.showControls && !playerState.error && (
+            {uiState.showControls && (
                 <Animated.View style={[styles.controlsOverlay, { opacity: animations.controlsOpacity }]} pointerEvents="box-none">
                     <View style={styles.topControls}>
                         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
@@ -641,7 +640,7 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
                                     </TouchableOpacity>
                                 </MenuView>
                             )}
-                            
+
                             <TouchableOpacity style={styles.controlButton} onPress={handleZoomOut}>
                                 <MaterialIcons name="zoom-out" size={24} color="white" />
                             </TouchableOpacity>
