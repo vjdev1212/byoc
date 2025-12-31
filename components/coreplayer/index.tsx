@@ -388,14 +388,7 @@ export const WaitingLobby: React.FC<{
 
     return (
         noStreamSelected ? (
-            <Animated.View
-                style={[styles.bufferingContainer, { opacity }]}
-                pointerEvents="none"
-            >
-                <Text style={styles.bufferingText}>
-                    {"No stream found or selected"}
-                </Text>
-            </Animated.View >
+            null
         ) : (
             <Animated.View
                 style={[styles.bufferingContainer, { opacity }]}
@@ -426,7 +419,7 @@ export const ArtworkBackground: React.FC<{
                 style={styles.artworkImage}
                 resizeMode="cover"
             />
-            <View style={styles.artworkOverlay} />            
+            <View style={styles.artworkOverlay} />
         </View>
     );
 };
