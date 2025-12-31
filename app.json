@@ -47,7 +47,6 @@
     "plugins": [
       "expo-router",
       "expo-font",
-      "expo-video",
       "expo-build-properties",
       [
         "expo-build-properties",
