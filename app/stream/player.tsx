@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState, useCallback } from 'react';
 import { StyleSheet, Platform, ActivityIndicator, View, Text, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -114,7 +114,7 @@ const EmbedPlayer = () => {
   }, [imdbid, tmdbid, type, season, episode, movieUrlTemplate, seriesUrlTemplate, generateUrl, videoUrl]);
 
   const handleBack = async (): Promise<void> => {
-    // Handle navigation back
+    router.back();
   };
 
   const handleUpdateProgress = useCallback(async (event: UpdateProgressEvent): Promise<void> => {

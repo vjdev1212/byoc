@@ -110,6 +110,7 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
 
     const progressBarValue = useRef(new Animated.Value(0)).current;
 
+    // FIXED: Removed playerState dependencies to prevent infinite loops
     const showControlsTemporarily = useCallback(() => {
         uiState.setShowControls(true);
         Animated.timing(animations.controlsOpacity, {
@@ -120,12 +121,13 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
 
         timers.clearTimer('hideControls');
 
-        if (playerState.isPlaying && !playerState.isBuffering && shouldAutoHideControls.current) {
+        // Use refs instead of state for conditions
+        if (stateRefs.current.isPlaying && shouldAutoHideControls.current) {
             timers.setTimer('hideControls', () => {
                 hideControls(uiState.setShowControls, animations.controlsOpacity);
             }, CONSTANTS.CONTROLS_AUTO_HIDE_DELAY);
         }
-    }, [playerState.isPlaying, playerState.isBuffering, animations.controlsOpacity, timers, uiState]);   
+    }, [animations.controlsOpacity, timers, uiState]);   
 
     // Cleanup on unmount
     useEffect(() => {
@@ -134,7 +136,7 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
         }
         return () => {
             if (updateProgress) {
-                const progress = calculateProgress(playerState.currentTime, playerState.duration);
+                const progress = calculateProgress(stateRefs.current.currentTime, stateRefs.current.duration);
                 updateProgress({ progress });
             }
             timers.clearAllTimers();
@@ -153,9 +155,6 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
             }
         };
     }, []); // Empty deps - only on mount/unmount
-
-    // REMOVED: Duplicate control auto-hide effects that were causing loops
-    // The showControlsTemporarily callback already handles this logic
 
     // Optimized subtitle loading
     useEffect(() => {
@@ -180,11 +179,11 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
         };
 
         loadSub();
-    }, [settings.selectedSubtitle, subtitles]);
+    }, [settings.selectedSubtitle, subtitles.length]); // FIXED: Use subtitles.length instead of subtitles
 
-    // Optimized subtitle updates
+    // Optimized subtitle updates - use refs to avoid dependency issues
     useEffect(() => {
-        if (subtitleState.parsedSubtitles.length === 0 || !playerState.isPlaying) {
+        if (subtitleState.parsedSubtitles.length === 0) {
             if (subtitleIntervalRef.current) {
                 clearInterval(subtitleIntervalRef.current);
                 subtitleIntervalRef.current = null;
@@ -193,7 +192,10 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
         }
 
         const updateSubtitle = () => {
-            const text = findActiveSubtitle(playerState.currentTime, subtitleState.parsedSubtitles);
+            // Use ref for isPlaying check
+            if (!stateRefs.current.isPlaying) return;
+            
+            const text = findActiveSubtitle(stateRefs.current.currentTime, subtitleState.parsedSubtitles);
             if (subtitleState.currentSubtitle !== text) {
                 subtitleState.setCurrentSubtitle(text);
             }
@@ -208,9 +210,9 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
                 subtitleIntervalRef.current = null;
             }
         };
-    }, [subtitleState.parsedSubtitles.length, playerState.isPlaying]); // Simplified deps
+    }, [subtitleState.parsedSubtitles.length]); // FIXED: Minimal dependencies
 
-    // Memoize VLC handlers
+    // FIXED: Stable VLC handlers using refs instead of state
     const vlcHandlers = useMemo(() => ({
         onLoad: (data: any) => {
             console.log('VLC onLoad');
@@ -355,9 +357,9 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
                 playerState.setShowBufferingLoader(false);
             });
         }
-    }), [playerState, animations.bufferOpacity, progressBarValue, progress]);
+    }), []); // FIXED: Empty dependencies - handlers use refs for state
 
-    // Progress update - simplified deps
+    // FIXED: Progress update with stable reference
     useEffect(() => {
         if (!updateProgress || !playerState.isReady || playerState.duration <= 0) {
             if (progressUpdateTimerRef.current) {
@@ -368,10 +370,8 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
         }
 
         progressUpdateTimerRef.current = setInterval(() => {
-            if (playerState.currentTime !== undefined && playerState.duration > 0) {
-                const progress = calculateProgress(playerState.currentTime, playerState.duration);
-                updateProgress({ progress });
-            }
+            const progress = calculateProgress(stateRefs.current.currentTime, stateRefs.current.duration);
+            updateProgress({ progress });
         }, 10 * 60 * 1000);
 
         return () => {
@@ -380,7 +380,7 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
                 progressUpdateTimerRef.current = null;
             }
         };
-    }, [playerState.isReady, playerState.duration]); // Removed updateProgress from deps
+    }, [playerState.isReady, playerState.duration > 0]); // FIXED: Simple boolean check
 
     const handleZoomIn = useCallback(async () => {
         await playHaptic();
@@ -401,22 +401,22 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
     }, [showControlsTemporarily]);
 
     const togglePlayPause = useCallback(async () => {
-        if (!playerState.isReady) return;
+        if (!stateRefs.current.isReady) return;
 
         await playHaptic();
 
-        const newPausedState = !playerState.isPaused;
+        const newPausedState = !stateRefs.current.isPaused;
 
         playerState.setIsPaused(newPausedState);
         playerState.setIsPlaying(!newPausedState);
 
         showControlsTemporarily();
-    }, [playerState.isReady, playerState.isPaused, playerState, showControlsTemporarily]);
+    }, [playerState, showControlsTemporarily]);
 
     const seekTo = useCallback((seconds: number) => {
-        if (!playerRef.current || playerState.duration <= 0) return;
-        const clampedTime = performSeek(seconds, playerState.duration);
-        const position = clampedTime / playerState.duration;
+        if (!playerRef.current || stateRefs.current.duration <= 0) return;
+        const clampedTime = performSeek(seconds, stateRefs.current.duration);
+        const position = clampedTime / stateRefs.current.duration;
 
         isSeeking.current = true;
         playerState.setIsSeeking(true);
@@ -435,10 +435,10 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
     }, [playerState, showControlsTemporarily, progressBarValue, animations.bufferOpacity]);
 
     const skipTime = useCallback(async (seconds: number) => {
-        if (!playerState.isReady) return;
+        if (!stateRefs.current.isReady) return;
         await playHaptic();
-        seekTo(playerState.currentTime + seconds);
-    }, [playerState.currentTime, seekTo, playerState.isReady]);
+        seekTo(stateRefs.current.currentTime + seconds);
+    }, [seekTo]);
 
     const handleOverlayPress = useCallback(() => {
         if (uiState.showControls) {
@@ -449,19 +449,19 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
     }, [uiState.showControls, showControlsTemporarily, animations.controlsOpacity, uiState]);
 
     const handleSliderChange = useCallback((value: number) => {
-        if (!playerState.isReady || playerState.duration <= 0) return;
+        if (!stateRefs.current.isReady || stateRefs.current.duration <= 0) return;
         playerState.setIsDragging(true);
         playerState.setDragPosition(value);
         progressBarValue.setValue(value);
-    }, [playerState.duration, playerState.isReady, progressBarValue, playerState]);
+    }, [progressBarValue, playerState]);
 
     const handleSliderComplete = useCallback((value: number) => {
-        if (playerState.isReady && playerState.duration > 0) {
-            const newTime = value * playerState.duration;
+        if (stateRefs.current.isReady && stateRefs.current.duration > 0) {
+            const newTime = value * stateRefs.current.duration;
             seekTo(newTime);
         }
         playerState.setIsDragging(false);
-    }, [playerState.duration, playerState.isReady, seekTo, playerState]);
+    }, [seekTo, playerState]);
 
     const handleSpeedSelect = useCallback(async (speed: number) => {
         await playHaptic();
@@ -495,12 +495,12 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
 
     const subtitleActions = useMemo(() =>
         buildSubtitleActions(subtitles as SubtitleSource[], settings.selectedSubtitle, true),
-        [subtitles, settings.selectedSubtitle]
+        [subtitles.length, settings.selectedSubtitle] // FIXED: Use subtitles.length
     );
 
     const audioActions = useMemo(() =>
         buildAudioActions(playerState.availableAudioTracks, settings.selectedAudioTrack),
-        [playerState.availableAudioTracks, settings.selectedAudioTrack]
+        [playerState.availableAudioTracks.length, settings.selectedAudioTrack] // FIXED: Use length
     );
 
     const { displayTime, sliderValue } = useMemo(() =>
@@ -515,9 +515,9 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
 
     const handleBack = useCallback(async () => {
         await playHaptic();
-        const progress = calculateProgress(playerState.currentTime, playerState.duration);
+        const progress = calculateProgress(stateRefs.current.currentTime, stateRefs.current.duration);
         onBack({ message: '', progress, player: "vlc" });
-    }, [playerState.currentTime, playerState.duration, onBack]);
+    }, [onBack]);
 
     return (
         <View style={styles.container}>

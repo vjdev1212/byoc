@@ -10,14 +10,12 @@ import { playHaptic } from "../coreplayer/utils";
 import { usePlayerState, useSubtitleState, useUIState, usePlayerSettings, useTimers, usePlayerAnimations, hideControls, CONSTANTS, loadSubtitle, handleSubtitleError, findActiveSubtitle, calculateProgress, performSeek, buildSpeedActions, buildSubtitleActions, buildAudioActions, calculateSliderValues, ArtworkBackground, WaitingLobby, SubtitleDisplay, CenterControls, ProgressBar, ContentFitLabel, SubtitleSource, ErrorDisplay, ExtendedMediaPlayerProps } from "../coreplayer";
 import { View, Text } from "../Themed";
 
-// Menu wrapper component - uses CustomMenu on web, MenuView on native
 const MenuWrapper: React.FC<any> = (props) => {
     if (Platform.OS === 'web') {
         return <WebMenu {...props} />;
     }
     return <MenuView {...props} />;
 };
-
 
 export const MediaPlayer: React.FC<ExtendedMediaPlayerProps> = ({
     videoUrl,
@@ -42,7 +40,6 @@ export const MediaPlayer: React.FC<ExtendedMediaPlayerProps> = ({
     const hasReportedErrorRef = useRef(false);
     const seekTimeoutRef = useRef<NodeJS.Timeout | any | null>(null);
 
-    // Use common hooks
     const playerState = usePlayerState();
     const subtitleState = useSubtitleState();
     const uiState = useUIState();
@@ -50,7 +47,6 @@ export const MediaPlayer: React.FC<ExtendedMediaPlayerProps> = ({
     const timers = useTimers();
     const animations = usePlayerAnimations();
 
-    // Extract stable references from hooks to avoid dependency issues
     const setShowControls = uiState.setShowControls;
     const controlsOpacity = animations.controlsOpacity;
     const bufferOpacity = animations.bufferOpacity;
@@ -64,7 +60,6 @@ export const MediaPlayer: React.FC<ExtendedMediaPlayerProps> = ({
     const speedMenuRef = useRef<MenuComponentRef>(null);
     const streamMenuRef = useRef<MenuComponentRef>(null);
 
-    // Local state
     const [contentFit, setContentFit] = useState<'contain' | 'cover' | 'fill'>('cover');
     const [showContentFitLabel, setShowContentFitLabel] = useState(false);
     const [isPiPActive, setIsPiPActive] = useState(false);
@@ -72,7 +67,23 @@ export const MediaPlayer: React.FC<ExtendedMediaPlayerProps> = ({
 
     const useCustomSubtitles = subtitles.length > 0;
 
-    // Initialize player (memoized to prevent recreation)
+    // FIXED: Stable refs for state
+    const stateRefs = useRef({
+        isPlaying: false,
+        isReady: false,
+        isDragging: false,
+        currentTime: 0,
+        duration: 0,
+    });
+
+    stateRefs.current = {
+        isPlaying: playerState.isPlaying,
+        isReady: playerState.isReady,
+        isDragging: playerState.isDragging,
+        currentTime: playerState.currentTime,
+        duration: playerState.duration,
+    };
+
     const player = useVideoPlayer({
         uri: videoUrl,
         metadata: { title, artwork },   
@@ -84,22 +95,7 @@ export const MediaPlayer: React.FC<ExtendedMediaPlayerProps> = ({
         player.allowsExternalPlayback = true;     
     }, [settings.isMuted, settings.playbackSpeed]));
 
-    // Restore progress - optimized with dependency array
-    useEffect(() => {
-        if (playerState.isReady && progress && progress > 0 && player.duration > 0) {
-            const currentTime = (progress / 100) * player.duration;
-            isSeeking.current = true;
-            wasPlayingBeforeSeek.current = false; // Don't auto-play when restoring
-            player.currentTime = currentTime;
-            playerState.setCurrentTime(currentTime);
-
-            const timeoutId = setTimeout(() => {
-                isSeeking.current = false;
-            }, 300);
-            return () => clearTimeout(timeoutId);
-        }
-    }, [playerState.isReady, player.duration, progress]);
-
+    // FIXED: Stable showControlsTemporarily
     const showControlsTemporarily = useCallback(() => {
         setShowControls(true);
         Animated.timing(controlsOpacity, { toValue: 1, duration: 200, useNativeDriver: true }).start();
@@ -117,14 +113,28 @@ export const MediaPlayer: React.FC<ExtendedMediaPlayerProps> = ({
     }, [controlsOpacity, clearTimer, setTimer, setShowControls]);
 
     useEffect(() => {
+        if (stateRefs.current.isReady && progress && progress > 0 && player.duration > 0) {
+            const currentTime = (progress / 100) * player.duration;
+            isSeeking.current = true;
+            wasPlayingBeforeSeek.current = false;
+            player.currentTime = currentTime;
+            playerState.setCurrentTime(currentTime);
+
+            const timeoutId = setTimeout(() => {
+                isSeeking.current = false;
+            }, 300);
+            return () => clearTimeout(timeoutId);
+        }
+    }, [player, playerState, progress]);
+
+    useEffect(() => {
         lastKnownTimeRef.current = playerState.currentTime;
     }, [playerState.currentTime]);
 
-    // Orientation and cleanup
     useEffect(() => {
         return () => {
             if (updateProgress) {
-                const progressValue = calculateProgress(lastKnownTimeRef.current, playerState.duration);
+                const progressValue = calculateProgress(lastKnownTimeRef.current, stateRefs.current.duration);
                 updateProgress({ progress: progressValue });
             }
             clearAllTimers();
@@ -132,9 +142,8 @@ export const MediaPlayer: React.FC<ExtendedMediaPlayerProps> = ({
                 clearTimeout(seekTimeoutRef.current);
             }
         };
-    }, [clearAllTimers, updateProgress, playerState.duration]);
+    }, [clearAllTimers]);
 
-    // Update player settings - memoized dependencies
     useEffect(() => {
         if (player) {
             player.muted = settings.isMuted;
@@ -142,7 +151,7 @@ export const MediaPlayer: React.FC<ExtendedMediaPlayerProps> = ({
         }
     }, [player, settings.isMuted, settings.playbackSpeed]);
 
-    // Load subtitles - optimized with better dependency tracking
+    // FIXED: Load subtitles
     useEffect(() => {
         if (!useCustomSubtitles || settings.selectedSubtitle < 0 || settings.selectedSubtitle >= subtitles.length) {
             subtitleState.setParsedSubtitles([]);
@@ -173,13 +182,10 @@ export const MediaPlayer: React.FC<ExtendedMediaPlayerProps> = ({
         };
 
         loadSub();
+        return () => { isMounted = false; };
+    }, [settings.selectedSubtitle, subtitles.length, useCustomSubtitles]);
 
-        return () => {
-            isMounted = false;
-        };
-    }, [settings.selectedSubtitle, subtitles, openSubtitlesClient, useCustomSubtitles]);
-
-    // Update subtitle display - optimized interval
+    // FIXED: Update subtitle display
     useEffect(() => {
         if (subtitleState.parsedSubtitles.length === 0) {
             subtitleState.setCurrentSubtitle('');
@@ -196,82 +202,73 @@ export const MediaPlayer: React.FC<ExtendedMediaPlayerProps> = ({
         updateSubtitle();
         const interval = setInterval(updateSubtitle, CONSTANTS.SUBTITLE_UPDATE_INTERVAL);
         return () => clearInterval(interval);
-    }, [subtitleState.parsedSubtitles, player.currentTime, subtitleState.currentSubtitle]);
+    }, [subtitleState.parsedSubtitles.length, player]);
 
-    // Player event handlers
     const playingChange = useEvent(player, "playingChange");
     useEffect(() => {
         if (!playingChange) return;
-
-        console.log('PlayingChange:', playingChange.isPlaying, 'isSeeking:', isSeeking.current);
         playerState.setIsPlaying(playingChange.isPlaying);
-
-        // Only hide buffering when video actually starts playing AND we're not in the middle of a seek
         if (playingChange.isPlaying && !isSeeking.current) {
             playerState.setIsBuffering(false);
             Animated.timing(bufferOpacity, { toValue: 0, duration: 200, useNativeDriver: true }).start();
         }
-    }, [playingChange, bufferOpacity]);
+    }, [playingChange, bufferOpacity, playerState]);
 
     const timeUpdate = useEvent(player, "timeUpdate");
     useEffect(() => {
-        if (!timeUpdate || playerState.isDragging) return;
-
+        if (!timeUpdate || stateRefs.current.isDragging) return;
         playerState.setCurrentTime(timeUpdate.currentTime);
         const videoDuration = player.duration || 0;
-
         if (videoDuration > 0 && playerState.duration !== videoDuration) {
             playerState.setDuration(videoDuration);
         }
-    }, [timeUpdate, playerState.isDragging, player.duration]);
+    }, [timeUpdate, player.duration, playerState]);
 
-    // Additional polling effect - optimized with ref checks
+    // FIXED: Polling with refs
     useEffect(() => {
-        if (!player || !playerState.isPlaying || playerState.isDragging || isSeeking.current) return;
+        if (!player || !stateRefs.current.isPlaying || stateRefs.current.isDragging || isSeeking.current) return;
 
         const pollInterval = setInterval(() => {
             if (!isSeeking.current && player.currentTime !== undefined) {
                 const currentTime = player.currentTime;
-                if (Math.abs(currentTime - playerState.currentTime) > 0.5) {
+                if (Math.abs(currentTime - stateRefs.current.currentTime) > 0.5) {
                     playerState.setCurrentTime(currentTime);
                 }
             }
-            if (player.duration > 0 && playerState.duration === 0) {
+            if (player.duration > 0 && stateRefs.current.duration === 0) {
                 playerState.setDuration(player.duration);
             }
         }, 200);
 
         return () => clearInterval(pollInterval);
-    }, [player, playerState.isPlaying, playerState.isDragging]);
+    }, [player, playerState]);
 
-    // Progress update interval - optimized
+    // FIXED: Progress update
     useEffect(() => {
-        if (!updateProgress || !playerState.isReady || playerState.duration <= 0) return;
+        if (!updateProgress || !stateRefs.current.isReady || stateRefs.current.duration <= 0) return;
 
         const progressInterval = setInterval(() => {
-            if (player.currentTime !== undefined && playerState.duration > 0) {
-                const progressValue = calculateProgress(player.currentTime, playerState.duration);
+            if (player.currentTime !== undefined && stateRefs.current.duration > 0) {
+                const progressValue = calculateProgress(player.currentTime, stateRefs.current.duration);
                 updateProgress({ progress: progressValue });
             }
         }, 10 * 60 * 1000);
 
         return () => clearInterval(progressInterval);
-    }, [player, playerState.isReady, playerState.duration, updateProgress]);
+    }, [player]);
 
     const statusChange = useEvent(player, "statusChange");
     useEffect(() => {
         if (!statusChange) return;
-
         const { status, error } = statusChange;
 
         switch (status) {
             case "loading":
-                if (!isSeeking.current && !playerState.isReady) {
+                if (!isSeeking.current && !stateRefs.current.isReady) {
                     playerState.setIsBuffering(true);
                     Animated.timing(bufferOpacity, { toValue: 1, duration: 200, useNativeDriver: true }).start();
                 }
                 setVideoError(null);
-                // Reset error report flag on new load attempt
                 hasReportedErrorRef.current = false;
                 break;
 
@@ -280,55 +277,40 @@ export const MediaPlayer: React.FC<ExtendedMediaPlayerProps> = ({
                     playerState.setIsBuffering(false);
                     Animated.timing(bufferOpacity, { toValue: 0, duration: 200, useNativeDriver: true }).start();
                 }
-
                 playerState.setIsReady(true);
                 playerState.setDuration(player.duration || 0);
                 setVideoError(null);
-                // Reset error flag on successful load
                 hasReportedErrorRef.current = false;
-
                 if (!isSeeking.current && !wasPlayingBeforeSeek.current) {
                     player.play();
                 }
                 break;
 
             case "error":
-                console.log('Video playback error:', error?.message || 'Unknown error');
                 playerState.setIsBuffering(false);
                 playerState.setIsReady(false);
-
-                // Only report error once per video URL
                 if (onPlaybackError && !hasReportedErrorRef.current) {
                     hasReportedErrorRef.current = true;
-                    const errorMessage = error?.message || 'Unable to load video';
-
-                    onPlaybackError({
-                        error: errorMessage
-                    });
-
-                    // Stop player to prevent repeated error callbacks
+                    onPlaybackError({ error: error?.message || 'Unable to load video' });
                     player.pause();
                 } else if (!onPlaybackError) {
-                    // If no error handler, show local error
-                    const errorMessage = error?.message || 'Unable to load video. The file may be corrupted or in an unsupported format.';
-                    setVideoError(errorMessage);
+                    setVideoError(error?.message || 'Unable to load video. The file may be corrupted or in an unsupported format.');
                     player.pause();
                 }
                 break;
         }
-    }, [statusChange, bufferOpacity, player, onPlaybackError]);
+    }, [statusChange, bufferOpacity, player, onPlaybackError, playerState]);
 
-    // Auto-hide controls when playback starts - with guard to prevent loops
+    // FIXED: Auto-hide controls
     useEffect(() => {
-        if (playerState.isPlaying && uiState.showControls && shouldAutoHideControls.current && !isHideControlsScheduled.current) {
+        if (stateRefs.current.isPlaying && uiState.showControls && shouldAutoHideControls.current && !isHideControlsScheduled.current) {
             showControlsTemporarily();
         }
-    }, [playerState.isPlaying, uiState.showControls, showControlsTemporarily]);
+    }, [uiState.showControls, showControlsTemporarily]);
 
     const showContentFitLabelTemporarily = useCallback(() => {
         setShowContentFitLabel(true);
         Animated.timing(contentFitLabelOpacity, { toValue: 1, duration: 200, useNativeDriver: true }).start();
-
         clearTimer('contentFitLabel');
         setTimer('contentFitLabel', () => {
             Animated.timing(contentFitLabelOpacity, { toValue: 0, duration: 300, useNativeDriver: true })
@@ -336,65 +318,48 @@ export const MediaPlayer: React.FC<ExtendedMediaPlayerProps> = ({
         }, CONSTANTS.CONTENT_FIT_LABEL_DELAY);
     }, [contentFitLabelOpacity, clearTimer, setTimer]);
 
-    // Control actions - all optimized with stable dependencies
+    // FIXED: All control actions use refs
     const togglePlayPause = useCallback(async () => {
-        if (!playerState.isReady) return;
+        if (!stateRefs.current.isReady) return;
         await playHaptic();
-        playerState.isPlaying ? player.pause() : player.play();
+        stateRefs.current.isPlaying ? player.pause() : player.play();
         showControlsTemporarily();
-    }, [playerState.isPlaying, player, playerState.isReady, showControlsTemporarily]);
+    }, [player, showControlsTemporarily]);
 
     const seekTo = useCallback((seconds: number) => {
-        if (!playerState.isReady || playerState.duration <= 0) return;
+        if (!stateRefs.current.isReady || stateRefs.current.duration <= 0) return;
+        if (seekTimeoutRef.current) clearTimeout(seekTimeoutRef.current);
 
-        // Clear any existing seek timeout
-        if (seekTimeoutRef.current) {
-            clearTimeout(seekTimeoutRef.current);
-        }
+        const clampedTime = performSeek(seconds, stateRefs.current.duration);
+        wasPlayingBeforeSeek.current = stateRefs.current.isPlaying;
 
-        const clampedTime = performSeek(seconds, playerState.duration);
+        if (stateRefs.current.isPlaying) player.pause();
 
-        // Store playing state before seek
-        wasPlayingBeforeSeek.current = playerState.isPlaying;
-
-        // Pause if playing
-        if (playerState.isPlaying) {
-            player.pause();
-        }
-
-        // Show buffering indicator
         playerState.setIsBuffering(true);
         Animated.timing(bufferOpacity, { toValue: 1, duration: 150, useNativeDriver: true }).start();
 
-        // Mark that we're seeking
         isSeeking.current = true;
-
-        // Perform seek
         player.currentTime = clampedTime;
         playerState.setCurrentTime(clampedTime);
 
-        // Wait a bit, then resume playback if it was playing
-        // The buffering indicator will be hidden when playingChange event fires
         seekTimeoutRef.current = setTimeout(() => {
             isSeeking.current = false;
-
             if (wasPlayingBeforeSeek.current) {
                 player.play();
             } else {
-                // If we weren't playing, hide buffer indicator manually
                 playerState.setIsBuffering(false);
                 Animated.timing(bufferOpacity, { toValue: 0, duration: 200, useNativeDriver: true }).start();
             }
         }, 150);
 
         showControlsTemporarily();
-    }, [playerState, player, showControlsTemporarily, bufferOpacity]);
+    }, [player, playerState, showControlsTemporarily, bufferOpacity]);
 
     const skipTime = useCallback(async (seconds: number) => {
-        if (!playerState.isReady) return;
+        if (!stateRefs.current.isReady) return;
         await playHaptic();
-        seekTo(playerState.currentTime + seconds);
-    }, [playerState.currentTime, seekTo, playerState.isReady]);
+        seekTo(stateRefs.current.currentTime + seconds);
+    }, [seekTo]);
 
     const cycleContentFit = useCallback(async () => {
         await playHaptic();
@@ -407,74 +372,50 @@ export const MediaPlayer: React.FC<ExtendedMediaPlayerProps> = ({
     const togglePiP = useCallback(async () => {
         await playHaptic();
         if (videoRef.current) {
-            if (isPiPActive) {
-                videoRef.current.stopPictureInPicture();
-            } else {
-                videoRef.current.startPictureInPicture();
-            }
+            isPiPActive ? videoRef.current.stopPictureInPicture() : videoRef.current.startPictureInPicture();
         }
         showControlsTemporarily();
     }, [isPiPActive, showControlsTemporarily]);
 
     const handleOverlayPress = useCallback(() => {
-        if (uiState.showControls) {
-            hideControls(setShowControls, controlsOpacity);
-        } else {
-            showControlsTemporarily();
-        }
+        uiState.showControls ? hideControls(setShowControls, controlsOpacity) : showControlsTemporarily();
     }, [uiState.showControls, showControlsTemporarily, controlsOpacity, setShowControls]);
 
-    // Slider handlers - optimized
     const handleSliderChange = useCallback((value: number) => {
-        if (!playerState.isReady || playerState.duration <= 0) return;
+        if (!stateRefs.current.isReady || stateRefs.current.duration <= 0) return;
         playerState.setIsDragging(true);
         playerState.setDragPosition(value);
     }, [playerState]);
 
     const handleSliderComplete = useCallback((value: number) => {
-        if (playerState.isReady && playerState.duration > 0) {
-            // Clear any existing seek timeout
-            if (seekTimeoutRef.current) {
-                clearTimeout(seekTimeoutRef.current);
-            }
+        if (stateRefs.current.isReady && stateRefs.current.duration > 0) {
+            if (seekTimeoutRef.current) clearTimeout(seekTimeoutRef.current);
 
-            const newTime = value * playerState.duration;
-            wasPlayingBeforeSeek.current = playerState.isPlaying;
+            const newTime = value * stateRefs.current.duration;
+            wasPlayingBeforeSeek.current = stateRefs.current.isPlaying;
 
-            // Pause during seek
-            if (playerState.isPlaying) {
-                player.pause();
-            }
+            if (stateRefs.current.isPlaying) player.pause();
 
-            // Show buffering indicator
             playerState.setIsBuffering(true);
             Animated.timing(bufferOpacity, { toValue: 1, duration: 150, useNativeDriver: true }).start();
 
-            // Mark that we're seeking
             isSeeking.current = true;
-
-            // Perform seek
             player.currentTime = newTime;
             playerState.setCurrentTime(newTime);
 
-            // Wait a bit, then resume playback if it was playing
             seekTimeoutRef.current = setTimeout(() => {
-                console.log('Slider seek complete, resuming playback:', wasPlayingBeforeSeek.current);
                 isSeeking.current = false;
-
                 if (wasPlayingBeforeSeek.current) {
                     player.play();
                 } else {
-                    // If we weren't playing, hide buffer indicator manually
                     playerState.setIsBuffering(false);
                     Animated.timing(bufferOpacity, { toValue: 0, duration: 200, useNativeDriver: true }).start();
                 }
             }, 150);
         }
         playerState.setIsDragging(false);
-    }, [playerState, player, bufferOpacity]);
+    }, [player, playerState, bufferOpacity]);
 
-    // Menu handlers - stable callbacks
     const handleSpeedSelect = useCallback(async (speed: number) => {
         await playHaptic();
         settings.setPlaybackSpeed(speed);
@@ -499,31 +440,28 @@ export const MediaPlayer: React.FC<ExtendedMediaPlayerProps> = ({
 
     const handleStreamSelect = useCallback(async (index: number) => {
         await playHaptic();
-        if (onStreamChange) {
-            onStreamChange(index);
-        }
+        if (onStreamChange) onStreamChange(index);
         showControlsTemporarily();
     }, [onStreamChange, showControlsTemporarily]);
 
-    // Memoized helper
     const getContentFitIcon = useCallback((): "fit-screen" | "crop" | "fullscreen" => {
         const icons = { contain: 'fit-screen', cover: 'crop', fill: 'fullscreen' } as const;
         return icons[contentFit];
     }, [contentFit]);
 
-    // Memoize menu actions to prevent rebuilding on every render
+    // FIXED: Memoized actions with stable deps
     const speedActions = useMemo(() => buildSpeedActions(settings.playbackSpeed), [settings.playbackSpeed]);
     const subtitleActions = useMemo(() => buildSubtitleActions(
         subtitles as SubtitleSource[],
         settings.selectedSubtitle,
         useCustomSubtitles,
         player.availableSubtitleTracks
-    ), [subtitles, settings.selectedSubtitle, useCustomSubtitles, player.availableSubtitleTracks]);
+    ), [subtitles.length, settings.selectedSubtitle, useCustomSubtitles, player.availableSubtitleTracks.length]);
     const audioActions = useMemo(() => buildAudioActions(
         player.availableAudioTracks,
         settings.selectedAudioTrack
-    ), [player.availableAudioTracks, settings.selectedAudioTrack]);
-    // Memoize slider values
+    ), [player.availableAudioTracks.length, settings.selectedAudioTrack]);
+    
     const { displayTime, sliderValue } = useMemo(() => calculateSliderValues(
         playerState.isDragging,
         playerState.dragPosition,
@@ -533,9 +471,9 @@ export const MediaPlayer: React.FC<ExtendedMediaPlayerProps> = ({
 
     const handleBack = useCallback(async () => {
         await playHaptic();
-        const progressValue = calculateProgress(lastKnownTimeRef.current, playerState.duration);
+        const progressValue = calculateProgress(lastKnownTimeRef.current, stateRefs.current.duration);
         onBack({ message: '', progress: progressValue, player: "native" });
-    }, [playerState.duration, onBack]);
+    }, [onBack]);
 
     const handleRetry = useCallback(() => {
         setVideoError(null);
@@ -546,7 +484,6 @@ export const MediaPlayer: React.FC<ExtendedMediaPlayerProps> = ({
         player.play();
     }, [player, playerState]);
 
-    // Memoize menu handlers to prevent recreating on every render
     const handleWebSpeedAction = useCallback((id: string) => {
         const speed = parseFloat(id.split('-')[1]);
         if (!isNaN(speed)) handleSpeedSelect(speed);
@@ -585,16 +522,6 @@ export const MediaPlayer: React.FC<ExtendedMediaPlayerProps> = ({
         if (index !== -1) handleAudioSelect(index);
     }, [audioActions, handleAudioSelect]);
 
-    const handleWebStreamAction = useCallback((id: string) => {
-        const index = parseInt(id.split('-')[1]);
-        if (!isNaN(index)) handleStreamSelect(index);
-    }, [handleStreamSelect]);
-
-    const handleNativeStreamAction = useCallback(({ nativeEvent }: any) => {
-        const index = parseInt(nativeEvent.event.split('-')[1]);
-        if (!isNaN(index)) handleStreamSelect(index);
-    }, [handleStreamSelect]);
-
     const handleMenuOpen = useCallback(() => {
         shouldAutoHideControls.current = false;
         clearTimer('hideControls');
@@ -619,15 +546,8 @@ export const MediaPlayer: React.FC<ExtendedMediaPlayerProps> = ({
     const handleSkipBackward = useCallback(() => skipTime(-10), [skipTime]);
     const handleSkipForward = useCallback(() => skipTime(10), [skipTime]);
 
-    // If there's an error, show error display
     if (videoError) {
-        return (
-            <ErrorDisplay
-                error={videoError}
-                onBack={handleBack}
-                onRetry={handleRetry}
-            />
-        );
+        return <ErrorDisplay error={videoError} onBack={handleBack} onRetry={handleRetry} />;
     }
 
     return (
@@ -642,19 +562,9 @@ export const MediaPlayer: React.FC<ExtendedMediaPlayerProps> = ({
                 contentFit={contentFit}                
             />
 
-            <ArtworkBackground
-                artwork={artwork}
-                isBuffering={playerState.isBuffering}
-                hasStartedPlaying={playerState.isReady}
-            />
-
-            <WaitingLobby
-                hasStartedPlaying={playerState.isReady}
-                opacity={bufferOpacity}
-            />
-
+            <ArtworkBackground artwork={artwork} isBuffering={playerState.isBuffering} hasStartedPlaying={playerState.isReady} />
+            <WaitingLobby hasStartedPlaying={playerState.isReady} opacity={bufferOpacity} />
             <TouchableOpacity style={styles.touchArea} activeOpacity={1} onPress={handleOverlayPress} />
-
             <SubtitleDisplay subtitle={useCustomSubtitles ? subtitleState.currentSubtitle : ''} />
 
             {uiState.showControls && (
@@ -693,9 +603,7 @@ export const MediaPlayer: React.FC<ExtendedMediaPlayerProps> = ({
                                     onCloseMenu={handleMenuClose}
                                 >
                                     <TouchableOpacity style={styles.controlButton} onPress={() => {
-                                        if (Platform.OS === 'android') {
-                                            audioMenuRef.current?.show();
-                                        }
+                                        if (Platform.OS === 'android') audioMenuRef.current?.show();
                                     }}>
                                         <MaterialIcons name="multitrack-audio" size={24} color="white" />
                                     </TouchableOpacity>
@@ -715,9 +623,7 @@ export const MediaPlayer: React.FC<ExtendedMediaPlayerProps> = ({
                                     onCloseMenu={handleMenuClose}
                                 >
                                     <TouchableOpacity style={styles.controlButton} onPress={() => {
-                                        if (Platform.OS === 'android') {
-                                            subtitleMenuRef.current?.show();
-                                        }
+                                        if (Platform.OS === 'android') subtitleMenuRef.current?.show();
                                     }}>
                                         <MaterialIcons name="closed-caption" size={24} color="white" />
                                     </TouchableOpacity>
@@ -736,11 +642,9 @@ export const MediaPlayer: React.FC<ExtendedMediaPlayerProps> = ({
                                 onCloseMenu={handleMenuClose}
                             >
                                 <TouchableOpacity style={styles.controlButton} onPress={() => {
-                                    if (Platform.OS === 'android') {
-                                        speedMenuRef.current?.show();
-                                    }
+                                    if (Platform.OS === 'android') speedMenuRef.current?.show();
                                 }}>
-                                    <MaterialIcons name="speed" size={24} color={"white"} />
+                                    <MaterialIcons name="speed" size={24} color="white" />
                                 </TouchableOpacity>
                             </MenuWrapper>
                         </View>
