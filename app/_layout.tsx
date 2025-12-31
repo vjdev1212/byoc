@@ -218,6 +218,22 @@ function RootLayoutNav() {
                 }
               }}
             />
+            <Stack.Screen
+              name="stream/player"
+              options={{
+                headerShown: true,
+                headerTransparent: true,
+                headerBackground: InvisibleHeaderBackground,
+                headerTitle: '',
+                headerTintColor: '#ffffff',
+                headerBackTitle: '',
+                headerShadowVisible: false,
+                headerBackVisible: false,
+                headerStyle: {
+                  backgroundColor: 'transparent',
+                }
+              }}
+            />
             <Stack.Screen name="settings/embed-movie"
               options={{
                 headerShown: true,
@@ -300,7 +316,7 @@ function RootLayoutNav() {
                   backgroundColor: 'transparent',
                 }
               }}
-            />            
+            />
           </Stack>
         </ThemeProvider>
       </ActionSheetProvider>

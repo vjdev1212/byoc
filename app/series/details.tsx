@@ -175,7 +175,7 @@ const SeriesDetails = () => {
 
   const handleEpisodeSelect = (season: number, episode: number) => {
     router.push({
-      pathname: '/stream/embed',
+      pathname: '/stream/player',
       params: { imdbid: imdbid, tmdbid: moviedbid, type: 'series', name: data.name, season: season, episode: episode },
     });
   };
@@ -185,7 +185,7 @@ const SeriesDetails = () => {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     router.push({
-      pathname: '/stream/embed',
+      pathname: '/stream/player',
       params: { imdbid: imdbid, tmdbid: moviedbid, type: 'series', name: data.name, season: 1, episode: 1 },
     });
   };
