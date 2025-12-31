@@ -256,7 +256,7 @@ const EmbedPlayer = () => {
       return require("@/components/vlcplayer").MediaPlayer;
     }
 
-    return require("@/components/nativeplayer").MediaPlayer;
+    return require("@/components/vlcplayer").MediaPlayer;
   }, [currentPlayerType]);
 
   if (isLoading || isLoadingStreams) {
