@@ -55,6 +55,17 @@ const useVLCPlayerState = () => {
     };
 };
 
+// Helper function to build stream actions for menu
+const buildStreamActions = (streams: any[], currentIndex: number) => {
+    return streams.map((stream, index) => ({
+        id: `stream-${index}`,
+        title: stream.title || stream.name || `Stream ${index + 1}`,
+        subtitle: stream.name || undefined,
+        state: currentIndex === index ? ('on' as const) : undefined,
+        titleColor: currentIndex === index ? '#007AFF' : '#FFFFFF',
+    }));
+};
+
 const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
     videoUrl,
     title,
@@ -98,7 +109,6 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
         isPaused: false
     });
 
-    // Update refs directly during render (no useEffect needed)
     stateRefs.current = {
         isPlaying: playerState.isPlaying,
         isReady: playerState.isReady,
@@ -110,7 +120,6 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
 
     const progressBarValue = useRef(new Animated.Value(0)).current;
 
-    // FIXED: Removed playerState dependencies to prevent infinite loops
     const showControlsTemporarily = useCallback(() => {
         uiState.setShowControls(true);
         Animated.timing(animations.controlsOpacity, {
@@ -121,7 +130,6 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
 
         timers.clearTimer('hideControls');
 
-        // Use refs instead of state for conditions
         if (stateRefs.current.isPlaying && shouldAutoHideControls.current) {
             timers.setTimer('hideControls', () => {
                 hideControls(uiState.setShowControls, animations.controlsOpacity);
@@ -129,7 +137,6 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
         }
     }, [animations.controlsOpacity, timers, uiState]);   
 
-    // Cleanup on unmount
     useEffect(() => {
         if (Platform.OS === "android") {
             ImmersiveMode.fullLayout(true);
@@ -154,9 +161,8 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
                 ImmersiveMode.fullLayout(false);
             }
         };
-    }, []); // Empty deps - only on mount/unmount
+    }, []);
 
-    // Optimized subtitle loading
     useEffect(() => {
         if (subtitles.length === 0 || settings.selectedSubtitle < 0 || settings.selectedSubtitle >= subtitles.length) {
             subtitleState.setParsedSubtitles([]);
@@ -179,9 +185,8 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
         };
 
         loadSub();
-    }, [settings.selectedSubtitle, subtitles.length]); // FIXED: Use subtitles.length instead of subtitles
+    }, [settings.selectedSubtitle, subtitles.length]);
 
-    // Optimized subtitle updates - use refs to avoid dependency issues
     useEffect(() => {
         if (subtitleState.parsedSubtitles.length === 0) {
             if (subtitleIntervalRef.current) {
@@ -192,7 +197,6 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
         }
 
         const updateSubtitle = () => {
-            // Use ref for isPlaying check
             if (!stateRefs.current.isPlaying) return;
             
             const text = findActiveSubtitle(stateRefs.current.currentTime, subtitleState.parsedSubtitles);
@@ -210,9 +214,8 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
                 subtitleIntervalRef.current = null;
             }
         };
-    }, [subtitleState.parsedSubtitles.length]); // FIXED: Minimal dependencies
+    }, [subtitleState.parsedSubtitles.length]);
 
-    // FIXED: Stable VLC handlers using refs instead of state
     const vlcHandlers = useMemo(() => ({
         onLoad: (data: any) => {
             console.log('VLC onLoad');
@@ -357,9 +360,8 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
                 playerState.setShowBufferingLoader(false);
             });
         }
-    }), []); // FIXED: Empty dependencies - handlers use refs for state
+    }), []);
 
-    // FIXED: Progress update with stable reference
     useEffect(() => {
         if (!updateProgress || !playerState.isReady || playerState.duration <= 0) {
             if (progressUpdateTimerRef.current) {
@@ -380,7 +382,7 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
                 progressUpdateTimerRef.current = null;
             }
         };
-    }, [playerState.isReady, playerState.duration > 0]); // FIXED: Simple boolean check
+    }, [playerState.isReady, playerState.duration > 0]);
 
     const handleZoomIn = useCallback(async () => {
         await playHaptic();
@@ -495,12 +497,17 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
 
     const subtitleActions = useMemo(() =>
         buildSubtitleActions(subtitles as SubtitleSource[], settings.selectedSubtitle, true),
-        [subtitles.length, settings.selectedSubtitle] // FIXED: Use subtitles.length
+        [subtitles.length, settings.selectedSubtitle]
     );
 
     const audioActions = useMemo(() =>
         buildAudioActions(playerState.availableAudioTracks, settings.selectedAudioTrack),
-        [playerState.availableAudioTracks.length, settings.selectedAudioTrack] // FIXED: Use length
+        [playerState.availableAudioTracks.length, settings.selectedAudioTrack]
+    );
+
+    const streamActions = useMemo(() =>
+        buildStreamActions(streams, currentStreamIndex),
+        [streams.length, currentStreamIndex]
     );
 
     const { displayTime, sliderValue } = useMemo(() =>
@@ -595,7 +602,40 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
                             <Text style={styles.titleText} numberOfLines={1}>{title}</Text>
                         </View>
 
-                        <View style={styles.topRightControls}>                            
+                        <View style={styles.topRightControls}>
+                            {streams.length > 1 && (
+                                <MenuView
+                                    ref={streamMenuRef}
+                                    title="Select Stream"
+                                    onPressAction={({ nativeEvent }) => {
+                                        const index = parseInt(nativeEvent.event.split('-')[1]);
+                                        if (!isNaN(index)) handleStreamSelect(index);
+                                    }}
+                                    actions={streamActions}
+                                    shouldOpenOnLongPress={false}
+                                    themeVariant="dark"
+                                    onOpenMenu={() => {
+                                        shouldAutoHideControls.current = false;
+                                        timers.clearTimer('hideControls');
+                                    }}
+                                    onCloseMenu={() => {
+                                        shouldAutoHideControls.current = true;
+                                        showControlsTemporarily();
+                                    }}
+                                >
+                                    <TouchableOpacity
+                                        style={styles.controlButton}
+                                        onPress={() => {
+                                            if (Platform.OS === 'android') {
+                                                streamMenuRef.current?.show();
+                                            }
+                                        }}
+                                    >
+                                        <MaterialIcons name="video-library" size={24} color="white" />
+                                    </TouchableOpacity>
+                                </MenuView>
+                            )}
+                            
                             <TouchableOpacity style={styles.controlButton} onPress={handleZoomOut}>
                                 <MaterialIcons name="zoom-out" size={24} color="white" />
                             </TouchableOpacity>
@@ -647,6 +687,7 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
 
                             {subtitles.length > 0 && (
                                 <MenuView
+                                    ref={subtitleMenuRef}
                                     style={{ zIndex: 1000 }}
                                     title="Subtitles"
                                     onPressAction={({ nativeEvent }) => {
