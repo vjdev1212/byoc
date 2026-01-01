@@ -17,6 +17,7 @@ import {
     calculateSliderValues,
     CenterControls,
     CONSTANTS,
+    ErrorDisplay,
     findActiveSubtitle,
     handleSubtitleError,
     hideControls,
@@ -582,6 +583,17 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
                 />
             )}
 
+            <ErrorDisplay
+                error={playerState.error}
+                onBack={handleBack}
+                onRetry={() => {
+                    playerState.setError(null);
+                    playerState.setIsReady(false);
+                    playerState.setIsBuffering(true);
+                    playerState.setHasStartedPlaying(false);
+                }}
+            />
+
             <ArtworkBackground
                 artwork={artwork}
                 isBuffering={playerState.isBuffering}
@@ -773,7 +785,6 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
                             </MenuView>
                         </View>
                     </View>
-
 
                     <CenterControls
                         isPlaying={playerState.isPlaying}
