@@ -107,14 +107,24 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
         isPaused: false
     });
 
-    stateRefs.current = {
-        isPlaying: playerState.isPlaying,
-        isReady: playerState.isReady,
-        isDragging: playerState.isDragging,
-        currentTime: playerState.currentTime,
-        duration: playerState.duration,
-        isPaused: playerState.isPaused
-    };
+    // Batch state ref updates
+    useEffect(() => {
+        stateRefs.current = {
+            isPlaying: playerState.isPlaying,
+            isReady: playerState.isReady,
+            isDragging: playerState.isDragging,
+            currentTime: playerState.currentTime,
+            duration: playerState.duration,
+            isPaused: playerState.isPaused
+        };
+    }, [
+        playerState.isPlaying,
+        playerState.isReady,
+        playerState.isDragging,
+        playerState.currentTime,
+        playerState.duration,
+        playerState.isPaused
+    ]);
 
     const progressBarValue = useRef(new Animated.Value(0)).current;
 
@@ -128,12 +138,12 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
 
         timers.clearTimer('hideControls');
 
-        if (stateRefs.current.isPlaying && shouldAutoHideControls.current) {
+        if (playerState.isPlaying && !playerState.isBuffering && shouldAutoHideControls.current) {
             timers.setTimer('hideControls', () => {
                 hideControls(uiState.setShowControls, animations.controlsOpacity);
             }, CONSTANTS.CONTROLS_AUTO_HIDE_DELAY);
         }
-    }, [animations.controlsOpacity, timers, uiState]);
+    }, [playerState.isPlaying, playerState.isBuffering, animations.controlsOpacity, timers, uiState]);
 
     // Show controls initially when no stream is selected
     useEffect(() => {
@@ -142,6 +152,18 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
             animations.controlsOpacity.setValue(1);
         }
     }, [noStreamSelected]);
+
+    useEffect(() => {
+        if (playerState.isPlaying && !playerState.isBuffering && uiState.showControls && shouldAutoHideControls.current) {
+            showControlsTemporarily();
+        }
+    }, [playerState.isPlaying, playerState.isBuffering]);
+
+    useEffect(() => {
+        if (playerState.isPlaying && uiState.showControls && shouldAutoHideControls.current) {
+            showControlsTemporarily();
+        }
+    }, [playerState.isPlaying]);
 
     useEffect(() => {
         if (Platform.OS === "android") {
@@ -194,7 +216,7 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
     }, [settings.selectedSubtitle, subtitles.length]);
 
     useEffect(() => {
-        if (subtitleState.parsedSubtitles.length === 0) {
+        if (subtitleState.parsedSubtitles.length === 0 || !playerState.isPlaying) {
             if (subtitleIntervalRef.current) {
                 clearInterval(subtitleIntervalRef.current);
                 subtitleIntervalRef.current = null;
@@ -203,8 +225,6 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
         }
 
         const updateSubtitle = () => {
-            if (!stateRefs.current.isPlaying) return;
-
             const text = findActiveSubtitle(stateRefs.current.currentTime, subtitleState.parsedSubtitles) || '';
             if (subtitleState.currentSubtitle !== text) {
                 subtitleState.setCurrentSubtitle(text);
@@ -220,7 +240,7 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
                 subtitleIntervalRef.current = null;
             }
         };
-    }, [subtitleState.parsedSubtitles.length]);
+    }, [subtitleState.parsedSubtitles.length, playerState.isPlaying, playerState.currentTime]);
 
     const vlcHandlers = useMemo(() => ({
         onLoad: (data: any) => {

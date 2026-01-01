@@ -106,7 +106,7 @@ export const styles = StyleSheet.create({
         position: 'absolute',
         bottom: 0,
         left: 0,
-        right: 0,        
+        right: 0,
         paddingTop: 20,
         height: 100,
         marginHorizontal: '3%',
