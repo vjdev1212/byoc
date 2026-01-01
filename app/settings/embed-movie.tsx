@@ -115,9 +115,9 @@ const EmbedMovieSettingsScreen = () => {
 
                     <View style={styles.hintContainer}>
                         <Text style={styles.hintLabel}>TMDB:</Text>
-                        <Text style={styles.hintText}>https://player.videasy.net/movie/{'{TMDBID}'}</Text>
+                        <Text style={styles.hintText}>https://example.com/movie/{'{TMDBID}'}</Text>
                         <Text style={styles.hintLabel}>IMDB:</Text>
-                        <Text style={styles.hintText}>https://player.videasy.net/movie/{'{IMDBID}'}</Text>
+                        <Text style={styles.hintText}>https://example.com/movie/{'{IMDBID}'}</Text>
                     </View>
                 </View>
 

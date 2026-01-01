@@ -115,9 +115,9 @@ const EmbedTvShowsSettingsScreen = () => {
                     
                     <View style={styles.hintContainer}>
                         <Text style={styles.hintLabel}>TMDB:</Text>
-                        <Text style={styles.hintText}>https://player.videasy.net/tv/{'{TMDBID}'}/{'{SEASON}'}/{'{EPISODE}'}</Text>
+                        <Text style={styles.hintText}>https://example.com/tv/{'{TMDBID}'}/{'{SEASON}'}/{'{EPISODE}'}</Text>
                         <Text style={styles.hintLabel}>IMDB:</Text>
-                        <Text style={styles.hintText}>https://player.videasy.net/tv/{'{IMDBID}'}/{'{SEASON}'}/{'{EPISODE}'}</Text>
+                        <Text style={styles.hintText}>https://example.com/tv/{'{IMDBID}'}/{'{SEASON}'}/{'{EPISODE}'}</Text>
                     </View>
                 </View>
             
