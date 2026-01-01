@@ -3,7 +3,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { StyleSheet, Platform, ActivityIndicator, View, Text, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ScreenOrientation from 'expo-screen-orientation';
-
+import OpenSubtitlesClient, { SubtitleResult } from '@/client/opensubtitles';
+import { Subtitle } from '@/components/coreplayer/models';
 interface Stream {
   name: string;
   title?: string;
@@ -36,6 +37,11 @@ const EmbedPlayer = () => {
   const [streams, setStreams] = useState<Stream[]>([]);
   const [currentStreamIndex, setCurrentStreamIndex] = useState<number>(-1);
   const [isLoadingStreams, setIsLoadingStreams] = useState<boolean>(true);
+
+  // Subtitle support
+  const [subtitles, setSubtitles] = useState<Subtitle[]>([]);
+  const [isLoadingSubtitles, setIsLoadingSubtitles] = useState(true);
+  const [openSubtitlesClient, setOpenSubtitlesClient] = useState<OpenSubtitlesClient | null>(null);
 
   const artwork = `https://images.metahub.space/background/medium/${imdbid}/img`;
 
@@ -99,6 +105,30 @@ const EmbedPlayer = () => {
       }
     };
   }, []);
+
+  // Initialize OpenSubtitles client
+  useEffect(() => {
+    const initializeClient = async () => {
+      try {
+        const client = new OpenSubtitlesClient();
+        setOpenSubtitlesClient(client);
+      } catch (error) {
+        console.error('Failed to initialize OpenSubtitles client:', error);
+        setOpenSubtitlesClient(null);
+        setSubtitles([]);
+        setIsLoadingSubtitles(false);
+      }
+    };
+
+    initializeClient();
+  }, []);
+
+  // Fetch subtitles when parameters change
+  useEffect(() => {
+    if (openSubtitlesClient) {
+      fetchSubtitles();
+    }
+  }, [imdbid, type, season, episode, openSubtitlesClient]);
 
   // Fetch streams from URL
   useEffect(() => {
@@ -210,6 +240,55 @@ const EmbedPlayer = () => {
     fetchStreams();
   }, [imdbid, tmdbid, type, season, episode, movieUrlTemplate, seriesUrlTemplate, generateUrl]);
 
+  const fetchSubtitles = async () => {
+    if (!openSubtitlesClient) {
+      setIsLoadingSubtitles(false);
+      return;
+    }
+
+    try {
+      setIsLoadingSubtitles(true);
+
+      const response = await openSubtitlesClient.searchByFileName(
+        title as string,
+        ['en'],
+        {
+          format: 'srt',
+          ai_translated: 'include',
+          machine_translated: 'include',
+          trusted_sources: 'include',
+          hearing_impaired: 'include'
+        }
+      );
+
+      if (response.success) {
+        if (response.data.length === 0) {
+          setSubtitles([]);
+          setIsLoadingSubtitles(false);
+          return;
+        }
+        const sortedData = response.data.sort((a: any, b: any) => b.download_count - a.download_count);
+
+        const transformedSubtitles: Subtitle[] = sortedData.map((subtitle: SubtitleResult) => ({
+          fileId: subtitle.file_id,
+          language: subtitle.language,
+          url: subtitle.url,
+          label: `${subtitle.name}`
+        }));
+
+        setSubtitles(transformedSubtitles);
+      } else {
+        console.error('Failed to fetch subtitles:', response.error);
+        setSubtitles([]);
+      }
+    } catch (error) {
+      console.error('Error fetching subtitles:', error);
+      setSubtitles([]);
+    } finally {
+      setIsLoadingSubtitles(false);
+    }
+  };
+
   const handleBack = async (): Promise<void> => {
     router.back();
   };
@@ -293,6 +372,9 @@ const EmbedPlayer = () => {
         streams={streams}
         currentStreamIndex={currentStreamIndex}
         onStreamChange={handleStreamChange}
+        subtitles={subtitles}
+        openSubtitlesClient={openSubtitlesClient}
+        isLoadingSubtitles={isLoadingSubtitles}
       />
     </View>
   );
