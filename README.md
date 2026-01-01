@@ -58,24 +58,6 @@ Use the following URL templates to embed movie and TV show content from any prov
 
 Ensure that {IMDBID}, {SEASON}, and {EPISODE} are included in the TV show URL; otherwise, it will not work. The {SEASON} and {EPISODE} parameters are not required for the movie template.
 
-## Docker support
-
-This project is available as docker container. Use the below yaml script.
-
-```yaml
-version: '3.0'
-
-name: BYOC
-services:
-  byoc:
-    container_name: byoc
-    hostname: byoc
-    image: vjdev1212/byoc:latest
-    ports:
-      - "4444:80"
-    restart: unless-stopped
-```
-
 ## Screenshots
 
 <p align="center">
