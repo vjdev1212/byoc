@@ -661,7 +661,7 @@ export const ErrorDisplay: React.FC<{
         <View style={styles.errorContainer}>
             <MaterialIcons name="error-outline" size={64} color="#ff6b6b" />
             <Text style={styles.errorTitle}>Playback Error</Text>
-            <Text style={styles.errorText}>{error}</Text>
+            <Text style={styles.errorText} numberOfLines={4}>{error}</Text>
         </View>
     );
 };

@@ -271,6 +271,7 @@ export const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: 'black',
         padding: 20,
+        marginHorizontal: '5%'
     },
 
     errorTitle: {
@@ -287,7 +288,7 @@ export const styles = StyleSheet.create({
         fontSize: 16,
         textAlign: 'center',
         lineHeight: 24,
-        marginBottom: 24,
+        marginBottom: 24
     },
 
     retryButton: {

@@ -885,23 +885,27 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
                         onSkipBackward={() => skipTime(-10)}
                         onSkipForward={() => skipTime(10)}
                     />
+                    {
+                        !playerState.error && (
+                            <View style={styles.bottomControls}>
+                                <ProgressBar
+                                    currentTime={displayTime}
+                                    duration={playerState.duration}
+                                    sliderValue={sliderValue}
+                                    isReady={playerState.isReady}
+                                    onValueChange={handleSliderChange}
+                                    onSlidingStart={() => {
+                                        playerState.setIsDragging(true);
+                                        showControlsTemporarily();
+                                    }}
+                                    onSlidingComplete={handleSliderComplete}
+                                    showSpeed={settings.playbackSpeed !== 1.0}
+                                    playbackSpeed={settings.playbackSpeed}
+                                />
+                            </View>
+                        )
+                    }
 
-                    <View style={styles.bottomControls}>
-                        <ProgressBar
-                            currentTime={displayTime}
-                            duration={playerState.duration}
-                            sliderValue={sliderValue}
-                            isReady={playerState.isReady}
-                            onValueChange={handleSliderChange}
-                            onSlidingStart={() => {
-                                playerState.setIsDragging(true);
-                                showControlsTemporarily();
-                            }}
-                            onSlidingComplete={handleSliderComplete}
-                            showSpeed={settings.playbackSpeed !== 1.0}
-                            playbackSpeed={settings.playbackSpeed}
-                        />
-                    </View>
                 </Animated.View>
             )}
         </View>
