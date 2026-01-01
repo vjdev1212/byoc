@@ -193,7 +193,7 @@ const EmbedPlayer = () => {
 
             // Check if response is HTML (error page) or not JSON
             if (responseText.trim().startsWith('<') || responseText.trim().startsWith('<!')) {
-              console.log('Received HTML instead of JSON - treating as direct embed URL');
+              console.log('Received HTML instead of JSON - treating as direct URL');
               throw new Error('HTML_RESPONSE');
             }
 
@@ -201,7 +201,7 @@ const EmbedPlayer = () => {
             try {
               data = JSON.parse(responseText);
             } catch (parseError) {
-              console.error('JSON parse failed - treating as direct embed URL');
+              console.error('JSON parse failed - treating as direct URL');
               throw new Error('PARSE_ERROR');
             }
 
@@ -218,12 +218,12 @@ const EmbedPlayer = () => {
                 setCurrentStreamIndex(-1);
               }
             } else {
-              console.log('No streams in response - treating as direct embed URL');
+              console.log('No streams in response - treating as direct URL');
               throw new Error('NO_STREAMS');
             }
           } catch (fetchError: any) {
-            // If fetch fails or returns non-JSON, treat the URL as a direct embed URL
-            console.log('Falling back to direct embed mode:', fetchError.message);
+            // If fetch fails or returns non-JSON, treat the URL as a direct URL
+            console.log('Falling back to direct mode:', fetchError.message);
 
             // Create a single "stream" from the URL itself
             const directStream: Stream = {

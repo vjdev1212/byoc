@@ -104,7 +104,7 @@ const SettingsScreen = () => {
             styles.sectionHeader,
             { color: '#8E8E93' }
           ]}>
-            EMBED SETTINGS
+            TEMPLATE SETTINGS
           </Text>
           <View style={styles.settingsGroup}>
             {preferencesList.map((item, index) => (

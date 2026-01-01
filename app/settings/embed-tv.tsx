@@ -98,7 +98,7 @@ const EmbedTvShowsSettingsScreen = () => {
                 {/* TV Shows URL Section */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>TV Shows Embed URL</Text>
+                        <Text style={styles.sectionTitle}>TV Shows URL Template</Text>
                     </View>
                     
                     <View style={styles.inputWrapper}>
@@ -108,7 +108,7 @@ const EmbedTvShowsSettingsScreen = () => {
                             onChangeText={setTvShowsUrlTemplate}
                             multiline
                             submitBehavior={'blurAndSubmit'}
-                            placeholder="Enter your TV shows embed URL template..."
+                            placeholder="Enter your TV shows URL template..."
                             placeholderTextColor="#666"
                         />
                     </View>

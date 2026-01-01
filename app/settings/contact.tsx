@@ -17,22 +17,9 @@ interface ContactItem {
 }
 
 const ContactScreen = () => {
-    const feedbackUrl = process.env.EXPO_PUBLIC_FEEDBACK_URL || '';
     const reportBugUrl = process.env.EXPO_PUBLIC_REPORT_BUG_URL || '';
     
-    const contactInfo: ContactItem[] = [
-        {
-            type: 'Feedback',
-            value: 'Submit your feedback',
-            icon: 'form',
-            iconLibrary: 'AntDesign',
-            action: async () => {
-                if (isHapticsSupported()) {
-                    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
-                }
-                Linking.openURL(feedbackUrl);
-            },
-        },
+    const contactInfo: ContactItem[] = [        
         {
             type: 'Report Bug',
             value: 'Found a Bug? Report here',

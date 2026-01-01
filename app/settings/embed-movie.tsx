@@ -98,7 +98,7 @@ const EmbedMovieSettingsScreen = () => {
                 {/* Movie URL Section */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Movie Embed URL</Text>
+                        <Text style={styles.sectionTitle}>Movies URL Template</Text>
                     </View>
 
                     <View style={styles.inputWrapper}>
@@ -108,7 +108,7 @@ const EmbedMovieSettingsScreen = () => {
                             onChangeText={setMovieUrlTemplate}
                             multiline
                             submitBehavior={'blurAndSubmit'}
-                            placeholder="Enter your movie embed URL template..."
+                            placeholder="Enter your movies URL template..."
                             placeholderTextColor="#666"
                         />
                     </View>
