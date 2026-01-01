@@ -205,7 +205,7 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
         const updateSubtitle = () => {
             if (!stateRefs.current.isPlaying) return;
 
-            const text = findActiveSubtitle(stateRefs.current.currentTime, subtitleState.parsedSubtitles);
+            const text = findActiveSubtitle(stateRefs.current.currentTime, subtitleState.parsedSubtitles) || '';
             if (subtitleState.currentSubtitle !== text) {
                 subtitleState.setCurrentSubtitle(text);
             }
