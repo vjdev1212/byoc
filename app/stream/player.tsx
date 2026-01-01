@@ -1,10 +1,11 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState, useCallback } from 'react';
-import { StyleSheet, Platform, ActivityIndicator, View, Text, Image } from 'react-native';
+import { StyleSheet, Platform, ActivityIndicator, View, Text, Image, StatusBar } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import OpenSubtitlesClient, { SubtitleResult } from '@/client/opensubtitles';
 import { Subtitle } from '@/components/coreplayer/models';
+
 interface Stream {
   name: string;
   title?: string;
@@ -44,6 +45,24 @@ const EmbedPlayer = () => {
   const [openSubtitlesClient, setOpenSubtitlesClient] = useState<OpenSubtitlesClient | null>(null);
 
   const artwork = `https://images.metahub.space/background/medium/${imdbid}/img`;
+
+  const setupOrientation = async () => {
+    if (Platform.OS !== 'web') {
+      try {
+        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+        StatusBar.setHidden(true);
+      } catch (error) {
+        console.warn("Failed to set orientation:", error);
+      }
+    }
+  };
+
+  const cleanupOrientation = async () => {
+    if (Platform.OS !== 'web') {
+      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.DEFAULT);
+      StatusBar.setHidden(false);
+    }
+  };
 
   const generateUrl = useCallback((
     template: string,
@@ -92,17 +111,9 @@ const EmbedPlayer = () => {
 
   // Setup screen orientation
   useEffect(() => {
-    const setupPlayer = async () => {
-      if (Platform.OS !== 'web') {
-        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
-      }
-    };
-
-    setupPlayer();
+    setupOrientation();
     return () => {
-      if (Platform.OS !== 'web') {
-        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.DEFAULT);
-      }
+      cleanupOrientation();
     };
   }, []);
 
