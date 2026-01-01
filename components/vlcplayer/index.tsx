@@ -67,6 +67,7 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
     subtitles = [],
     openSubtitlesClient,
     updateProgress,
+    onPlaybackError,
     streams = [],
     currentStreamIndex = -1,
     onStreamChange
@@ -352,8 +353,14 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
         onError: (error: any) => {
             console.error('VLC error:', error);
             let errorMessage = "Unable to load the video.";
-            if (error?.error) {
-                errorMessage = `Unable to load the video. ${error.error}`;
+            
+            // Extract error message from various possible properties
+            if (error?.message) {
+                errorMessage = error.message;
+            } else if (error?.title) {
+                errorMessage = error.title;
+            } else if (error?.error) {
+                errorMessage = error.error;
             }
 
             requestAnimationFrame(() => {
@@ -361,9 +368,16 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
                 playerState.setIsBuffering(false);
                 playerState.setIsReady(false);
                 playerState.setShowBufferingLoader(false);
+                playerState.setIsPlaying(false);
+                playerState.setIsPaused(false);
             });
+            
+            // Also call onPlaybackError if provided
+            if (onPlaybackError) {
+                onPlaybackError({ error: errorMessage });
+            }
         }
-    }), []);
+    }), [progress, playerState, animations, onPlaybackError]);
 
     useEffect(() => {
         if (!updateProgress || !playerState.isReady || playerState.duration <= 0) {
@@ -496,6 +510,7 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
         playerState.setDuration(0);
         playerState.setIsPaused(false);
         playerState.setIsPlaying(false);
+        playerState.setError(null);
         progressBarValue.setValue(0);
 
         // Force player remount by changing key
@@ -591,6 +606,7 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
                     playerState.setIsReady(false);
                     playerState.setIsBuffering(true);
                     playerState.setHasStartedPlaying(false);
+                    playerState.setPlayerKey(prev => prev + 1);
                 }}
             />
 
@@ -600,7 +616,6 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
                 hasStartedPlaying={playerState.hasStartedPlaying}
                 error={!!playerState.error}
             />
-
 
             <WaitingLobby
                 noStreamSelected={noStreamSelected}
