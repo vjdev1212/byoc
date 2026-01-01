@@ -1,11 +1,11 @@
 {
   "name": "BYOC",
   "identifier": "com.vijayyuvi.byoc",
-  "subtitle": "BYOC",
-  "description": "BYOC is your ultimate streaming companion, offering a simple and elegant way to explore and watch movies and TV shows from VidSrc and similar services. With a sleek interface and intuitive navigation, you can easily search for your favorite content, browse trending titles, and enjoy seamless playback—all in one place.",
-  "iconURL": "https://raw.githubusercontent.com/vjdev1212/byoc-public/refs/heads/main/assets/images/icon.png",
-  "headerURL": "https://raw.githubusercontent.com/vjdev1212/byoc-public/refs/heads/main/assets/banners/BYOC-feature-graphic.png",
-  "website": "https://github.com/vjdev1212/byoc-public",
+  "subtitle": "Bring your own content for streaming",
+  "description": "BYOC is your ultimate streaming companion, offering a simple and elegant way to explore and watch movies and TV shows with your own contents.",
+  "iconURL": "https://raw.githubusercontent.com/vjdev1212/byoc/refs/heads/main/assets/images/icon.png",
+  "headerURL": "https://raw.githubusercontent.com/vjdev1212/byoc/refs/heads/main/assets/banners/BYOC-feature-graphic.png",
+  "website": "https://github.com/vjdev1212/byoc",
   "tintColor": "#535aff",
   "featuredApps": [
     "com.vijayyuvi.byoc"
@@ -15,33 +15,25 @@
       "name": "BYOC",
       "bundleIdentifier": "com.vijayyuvi.byoc",
       "developerName": "vjdev1212",
-      "subtitle": "BYOC - Your streaming companion for discovering and watching content from multiple sources.",
-      "localizedDescription": "BYOC is your ultimate streaming companion, offering a simple and elegant way to explore and watch movies and TV shows from VidSrc and similar services. With a sleek interface and intuitive navigation, you can easily search for your favorite content, browse trending titles, and enjoy seamless playback—all in one place.",
-      "iconURL": "https://raw.githubusercontent.com/vjdev1212/byoc-public/refs/heads/main/assets/images/icon.png",
-      "downloadURL": "https://github.com/vjdev1212/byoc-public/releases/download/v1.0.14/EmbedIn_v1.0.14.ipa",
+      "subtitle": "BYOC - Bring your own content for streaming.",
+      "localizedDescription": "BYOC is your ultimate streaming companion, offering a simple and elegant way to explore and watch movies and TV shows with your own contents.",
+      "iconURL": "https://raw.githubusercontent.com/vjdev1212/byoc/refs/heads/main/assets/images/icon.png",
+      "downloadURL": "https://github.com/vjdev1212/byoc/releases/download/v1.0.0/EmbedIn_v1.0.0.ipa",
       "tintColor": "#535aff",
       "category": "entertainment",
       "screenshots": [
-        "https://raw.githubusercontent.com/vjdev1212/byoc-public/refs/heads/main/BYOC-screenshots/iPhone/5-Carousel.png",
-        "https://raw.githubusercontent.com/vjdev1212/byoc-public/refs/heads/main/BYOC-screenshots/iPhone/1-Home%20Screen.png",
-        "https://raw.githubusercontent.com/vjdev1212/byoc-public/refs/heads/main/BYOC-screenshots/iPhone/2-Movie-Details.png",
-        "https://raw.githubusercontent.com/vjdev1212/byoc-public/refs/heads/main/BYOC-screenshots/iPhone/3-TV-Details.png",
-        "https://raw.githubusercontent.com/vjdev1212/byoc-public/refs/heads/main/BYOC-screenshots/iPhone/4-Search.png"
+        "https://raw.githubusercontent.com/vjdev1212/byoc/refs/heads/main/byoc-screenshots/iPhone/5-Carousel.png",
+        "https://raw.githubusercontent.com/vjdev1212/byoc/refs/heads/main/byoc-screenshots/iPhone/1-Home%20Screen.png",
+        "https://raw.githubusercontent.com/vjdev1212/byoc/refs/heads/main/byoc-screenshots/iPhone/2-Movie-Details.png",
+        "https://raw.githubusercontent.com/vjdev1212/byoc/refs/heads/main/byoc-screenshots/iPhone/3-TV-Details.png",
+        "https://raw.githubusercontent.com/vjdev1212/byoc/refs/heads/main/byoc-screenshots/iPhone/4-Search.png"
       ],
       "versions": [
         {
-          "version": "1.0.14",
-          "date": "2025-11-12",
-          "localizedDescription": "• Removed Sandbox settings as it was not working with many providers. Use Adblockers instead.",
-          "downloadURL": "https://github.com/vjdev1212/byoc-public/releases/download/v1.0.14/EmbedIn_v1.0.14.ipa",
-          "size": 8680000,
-          "minOSVersion": "18.0"
-        },
-        {
-          "version": "1.0.13",
-          "date": "2025-11-01",
-          "localizedDescription": "• Fixed Android Issues. \n• UI Improvements.",
-          "downloadURL": "https://github.com/vjdev1212/byoc-public/releases/download/v1.0.13/EmbedIn_v1.0.13.ipa",
+          "version": "1.0.0",
+          "date": "2026-01-01",
+          "localizedDescription": "1. Initial version of BYOC",
+          "downloadURL": "https://github.com/vjdev1212/byoc/releases/download/v1.0.0/BYOC_v1.0.0.ipa",
           "size": 8680000,
           "minOSVersion": "18.0"
         }
@@ -54,14 +46,14 @@
   ],
   "news": [
     {
-      "title": "BYOC v1.0.14 Released",
-      "identifier": "byoc-v1.0.14-release",
-      "caption": "1. Removed Sandbox settings as it was not working with many providers. Use Adblockers instead.",
-      "date": "2025-11-12",
+      "title": "BYOC v1.0.0 Released",
+      "identifier": "byoc-v1.0.0-release",
+      "caption": "1. Initial version of BYOC",
+      "date": "2026-01-01",
       "tintColor": "#535aff",
-      "imageURL": "https://raw.githubusercontent.com/vjdev1212/byoc-public/refs/heads/main/assets/banners/BYOC-feature-graphic.png",
+      "imageURL": "https://raw.githubusercontent.com/vjdev1212/byoc/refs/heads/main/assets/banners/BYOC-feature-graphic.png",
       "notify": true,
-      "url": "https://github.com/vjdev1212/byoc-public/releases/tag/v1.0.14"
+      "url": "https://github.com/vjdev1212/byoc/releases/tag/v1.0.0"
     }
   ]
 }
