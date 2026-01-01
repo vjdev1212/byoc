@@ -16,8 +16,47 @@ import * as Haptics from 'expo-haptics';
 import { isHapticsSupported } from '@/utils/platform';
 import { CatalogUrl, MovieGneres, TvGneres } from '@/constants/Tmdb';
 
+// Lazy loading wrapper component
+const LazyPosterList = ({
+  apiUrl,
+  title,
+  type,
+  index
+}: {
+  apiUrl: string;
+  title: string;
+  type: 'movie' | 'series';
+  index: number;
+}) => {
+  const [shouldLoad, setShouldLoad] = useState(index < 2); // Load first 2 immediately
+
+  return (
+    <View
+      onLayout={() => {
+        if (!shouldLoad) {
+          setShouldLoad(true);
+        }
+      }}
+    >
+      {shouldLoad ? (
+        <PosterList apiUrl={apiUrl} title={title} type={type} />
+      ) : (
+        <View style={{ height: 280, marginBottom: 20 }} />
+      )}
+    </View>
+  );
+};
+
 export default function HomeScreen() {
   const [filter, setFilter] = useState<'all' | 'movies' | 'series'>('all');
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Refresh watch history when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      setRefreshKey(prev => prev + 1);
+    }, [])
+  );
 
   const filters = [
     { key: 'all', label: 'All', icon: 'apps' },
@@ -92,6 +131,27 @@ export default function HomeScreen() {
     });
   };
 
+  const handleWatchHistoryItemPress = (item: any) => {
+    router.push({
+      pathname: '/stream/player',
+      params: {
+        videoUrl: item.videoUrl,
+        title: item.title,
+        imdbid: item.imdbid,
+        type: item.type,
+        season: item.season,
+        episode: item.episode,
+        progress: item.progress.toString(),
+      },
+    });
+  };
+
+  function getWatchHistoryType(filter: string): "all" | "series" | "movie" {
+    if (filter === 'movies') return 'movie';
+    if (filter === 'series') return 'series';
+    return 'all';
+  }
+
   return (
     <View style={[styles.container]}>
       <StatusBar />
@@ -144,11 +204,12 @@ export default function HomeScreen() {
           </View>
 
           {activeLists.map((list, i) => (
-            <PosterList
+            <LazyPosterList
               key={`${filter}-${i}`}
               apiUrl={list.apiUrl}
               title={list.title}
               type={list.type as 'movie' | 'series'}
+              index={i}
             />
           ))}
         </View>
@@ -173,7 +234,7 @@ const styles = StyleSheet.create({
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
+    paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 25,
     backgroundColor: '#1a1a1a',
