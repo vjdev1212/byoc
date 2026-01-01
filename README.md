@@ -78,7 +78,13 @@ services:
 
 ## Screenshots
 
-
+<p align="center">
+  <img src="https://raw.githubusercontent.com/vjdev1212/byoc/refs/heads/main/byoc-screenshots/iPhone/1-Home%20Screen.png" width="18%" />
+  <img src="https://raw.githubusercontent.com/vjdev1212/byoc/refs/heads/main/byoc-screenshots/iPhone/2-Movie-Details.png" width="18%" />
+  <img src="https://raw.githubusercontent.com/vjdev1212/byoc/refs/heads/main/byoc-screenshots/iPhone/3-TV-Details.png" width="18%" />
+  <img src="https://raw.githubusercontent.com/vjdev1212/byoc/refs/heads/main/byoc-screenshots/iPhone/4-Search.png" width="18%" />
+  <img src="https://raw.githubusercontent.com/vjdev1212/byoc/refs/heads/main/byoc-screenshots/iPhone/5-Carousel.png" width="18%" />  
+</p>
 
 ## LICENSE
 
