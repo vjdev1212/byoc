@@ -1,6 +1,6 @@
 # BYOC
 
-A simple and sleek frontend for VidSrc and similar services that provide embedded movies and TV shows. Easily search, browse, and watch content with a user-friendly interface.
+BYOC - Bring your own content, a simple and sleek frontend for your own collection of movies and TV shows.
 
 ## Framework
 
@@ -16,7 +16,7 @@ This app is built using the Expo React Native framework.
 
 1. Clone the repository:
    ```sh
-   git clone https://github.com/jarvisnexus/byoc.git
+   git clone https://github.com/vjdev1212/byoc.git
    cd vidsrcstream
    ```
 2. Create a `.env` file in the project root and set the TMDB API Key
@@ -40,20 +40,20 @@ This app is built using the Expo React Native framework.
 
 To stop the running process, press `Ctrl + C` in the terminal.
 
-## Embed URL Templates
+## URL Templates
 
-The embed URL templates can be modified in the Settings > Embed Settings page. Update them as needed to customize the embed URLs.
+The URL templates can be modified in the Settings > Template Settings page. Update them as needed to customize the embed URLs.
 
 Use the following URL templates to embed movie and TV show content from any provider:
 
 - **Movies:**
   ```sh
-  https://vidsrc.cc/v2/embed/movie/{IMDBID}?poster=true&autoPlay=false
+  https://nuviostreams.hayd.uk/stream/movie/{IMDBID}.json
   ```
 
 - **TV Shows:**
   ```sh
-  https://vidsrc.cc/v2/embed/tv/{IMDBID}/{SEASON}/{EPISODE}?poster=true&autoPlay=false
+  https://nuviostreams.hayd.uk/stream/series/{IMDBID}:{SEASON}:{EPISODE}.json
   ```
 
 Ensure that {IMDBID}, {SEASON}, and {EPISODE} are included in the TV show URL; otherwise, it will not work. The {SEASON} and {EPISODE} parameters are not required for the movie template.
@@ -70,27 +70,13 @@ services:
   byoc:
     container_name: byoc
     hostname: byoc
-    image: jarvisnexus/byoc:latest
+    image: vjdev1212/byoc:latest
     ports:
       - "4444:80"
     restart: unless-stopped
 ```
 
 ## Screenshots
-
-<p align="center">
-  <img src="https://i.postimg.cc/Wzm0hzxL/1.png" width="18%" />
-  <img src="https://i.postimg.cc/7ZZSZxVd/2.png" width="18%" />
-  <img src="https://i.postimg.cc/XY1dZT1J/3.png" width="18%" />
-  <img src="https://i.postimg.cc/Yq31741Q/4.png" width="18%" />
-</p>
-
-<p align="center">
-  <img src="https://i.postimg.cc/5jd1kNt0/1.png" width="18%" />
-  <img src="https://i.postimg.cc/t4zZP8rP/2.png" width="18%" />
-  <img src="https://i.postimg.cc/N0fjSGpr/3.png" width="18%" />
-  <img src="https://i.postimg.cc/Kz1R6jmr/4.png" width="18%" />  
-</p>
 
 
 

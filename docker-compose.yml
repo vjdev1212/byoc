@@ -5,7 +5,7 @@ services:
   byoc:
     container_name: byoc
     hostname: byoc
-    image: jarvisnexus/byoc:latest
+    image: vjdev1212/byoc:latest
     ports:
       - "4444:80"
     restart: unless-stopped
