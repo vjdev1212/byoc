@@ -260,8 +260,13 @@ const EmbedPlayer = () => {
     try {
       setIsLoadingSubtitles(true);
 
+      const searchQuery = (title as string)
+        .replace(/[:|,;.!?'"\/\\@#$%^&*_+=\[\]{}<>~`-]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+        
       const response = await openSubtitlesClient.searchByFileName(
-        title as string,
+        searchQuery,
         ['en'],
         {
           format: 'srt',
