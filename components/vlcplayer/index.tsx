@@ -886,7 +886,7 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
                         onSkipForward={() => skipTime(10)}
                     />
                     {
-                        !playerState.error && (
+                        (!playerState.error && !noStreamSelected) && (
                             <View style={styles.bottomControls}>
                                 <ProgressBar
                                     currentTime={displayTime}
