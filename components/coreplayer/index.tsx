@@ -267,10 +267,8 @@ export const buildStreamActions = (streams: Stream[], currentIndex: number): Men
         const name = stream.name || "";
         const title = stream.title || stream.description || "";
 
-        const quality = extractQuality(name, title);
         const size = extractSize(title);
         const videoCodec = extractVideoCodec(title);
-        const audioCodec = extractAudioCodec(title);
 
         // Build parts dynamically
         const parts: string[] = [];
@@ -409,7 +407,7 @@ export const ArtworkBackground: React.FC<{
     isBuffering: boolean;
     hasStartedPlaying?: boolean;
     error?: boolean;
-}> = ({ artwork, isBuffering, hasStartedPlaying = true, error }) => {
+}> = ({ artwork, hasStartedPlaying = true, error }) => {
     if (!artwork || hasStartedPlaying || error) return null;
 
     return (
@@ -656,24 +654,14 @@ export const ErrorDisplay: React.FC<{
     error: string | null;
     onBack: () => void;
     onRetry?: () => void;
-}> = ({ error, onBack, onRetry }) => {
+}> = ({ error }) => {
     if (!error) return null;
 
     return (
         <View style={styles.errorContainer}>
-            <TouchableOpacity style={styles.errorBackButton} onPress={onBack}>
-                <Ionicons name="chevron-back" size={28} color="white" />
-            </TouchableOpacity>
-
             <MaterialIcons name="error-outline" size={64} color="#ff6b6b" />
             <Text style={styles.errorTitle}>Playback Error</Text>
             <Text style={styles.errorText}>{error}</Text>
-
-            {onRetry && (
-                <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
-                    <Text style={styles.retryButtonText}>Retry</Text>
-                </TouchableOpacity>
-            )}
         </View>
     );
 };

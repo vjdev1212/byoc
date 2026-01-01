@@ -78,6 +78,8 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
     const progressUpdateTimerRef = useRef<NodeJS.Timeout | null | any>(null);
     const subtitleIntervalRef = useRef<NodeJS.Timeout | null | any>(null);
     const lastProgressUpdateRef = useRef(0);
+    const loadTimeRef = useRef<number>(0);
+    const hasPlayedRef = useRef<boolean>(false);
 
     const playerState = useVLCPlayerState();
     const subtitleState = useSubtitleState();
@@ -225,6 +227,9 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
             console.log('VLC onLoad');
             console.log('progress', progress);
 
+            loadTimeRef.current = Date.now();
+            hasPlayedRef.current = false;
+
             requestAnimationFrame(() => {
                 playerState.setIsBuffering(false);
                 playerState.setIsReady(true);
@@ -257,6 +262,11 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
         onProgress: (data: any) => {
             const { currentTime: current, duration: dur } = data;
             const newCurrentTime = current / 1000;
+
+            // Mark that we've actually played some content
+            if (newCurrentTime > 1) {
+                hasPlayedRef.current = true;
+            }
 
             if (isSeeking.current) {
                 isSeeking.current = false;
@@ -336,24 +346,65 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
 
         onStopped: () => {
             console.log('VLC onStopped event');
-            requestAnimationFrame(() => {
-                playerState.setIsPlaying(false);
-                playerState.setIsPaused(false);
-            });
+
+            // If stopped very soon after load without playing content, treat as error
+            const timeSinceLoad = Date.now() - loadTimeRef.current;
+            if (timeSinceLoad < 5000 && !hasPlayedRef.current) {
+                console.log('Stream stopped unexpectedly after', timeSinceLoad, 'ms');
+                const errorMessage = "Stream stopped unexpectedly. The video source may be invalid or corrupted.";
+
+                requestAnimationFrame(() => {
+                    playerState.setError(errorMessage);
+                    playerState.setIsPlaying(false);
+                    playerState.setIsPaused(false);
+                    playerState.setIsBuffering(false);
+                    playerState.setIsReady(false);
+                });
+
+                if (onPlaybackError) {
+                    onPlaybackError({ error: errorMessage });
+                }
+            } else {
+                requestAnimationFrame(() => {
+                    playerState.setIsPlaying(false);
+                    playerState.setIsPaused(false);
+                });
+            }
         },
 
         onEnd: () => {
             console.log('VLC onEnd event');
-            requestAnimationFrame(() => {
-                playerState.setIsPlaying(false);
-                playerState.setIsPaused(false);
-            });
+
+            // If ended very soon after load without playing content, treat as error
+            const timeSinceLoad = Date.now() - loadTimeRef.current;
+            if (timeSinceLoad < 5000 && !hasPlayedRef.current) {
+                console.log('Stream ended unexpectedly after', timeSinceLoad, 'ms');
+                const errorMessage = "Stream ended unexpectedly. The video source may be invalid or not accessible.";
+
+                requestAnimationFrame(() => {
+                    playerState.setError(errorMessage);
+                    playerState.setIsPlaying(false);
+                    playerState.setIsPaused(false);
+                    playerState.setIsBuffering(false);
+                    playerState.setIsReady(false);
+                });
+
+                if (onPlaybackError) {
+                    onPlaybackError({ error: errorMessage });
+                }
+            } else {
+                // Normal end of content
+                requestAnimationFrame(() => {
+                    playerState.setIsPlaying(false);
+                    playerState.setIsPaused(false);
+                });
+            }
         },
 
         onError: (error: any) => {
             console.error('VLC error:', error);
             let errorMessage = "Unable to load the video.";
-            
+
             // Extract error message from various possible properties
             if (error?.message) {
                 errorMessage = error.message;
@@ -363,19 +414,22 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
                 errorMessage = error.error;
             }
 
-            requestAnimationFrame(() => {
-                playerState.setError(errorMessage);
-                playerState.setIsBuffering(false);
-                playerState.setIsReady(false);
-                playerState.setShowBufferingLoader(false);
-                playerState.setIsPlaying(false);
-                playerState.setIsPaused(false);
-            });
-            
+            console.log('Setting error state with message:', errorMessage);
+
+            // Set error state directly without requestAnimationFrame to ensure immediate update
+            playerState.setError(errorMessage);
+            playerState.setIsBuffering(false);
+            playerState.setIsReady(false);
+            playerState.setShowBufferingLoader(false);
+            playerState.setIsPlaying(false);
+            playerState.setIsPaused(false);
+
             // Also call onPlaybackError if provided
             if (onPlaybackError) {
                 onPlaybackError({ error: errorMessage });
             }
+
+            console.log('Error state set, should trigger re-render');
         }
     }), [progress, playerState, animations, onPlaybackError]);
 
@@ -513,6 +567,10 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
         playerState.setError(null);
         progressBarValue.setValue(0);
 
+        // Reset timing refs
+        loadTimeRef.current = 0;
+        hasPlayedRef.current = false;
+
         // Force player remount by changing key
         playerState.setPlayerKey(prev => prev + 1);
 
@@ -559,10 +617,15 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
         onBack({ message: '', progress, player: "vlc" });
     }, [onBack]);
 
+    // Debug log to see error state
+    useEffect(() => {
+        console.log('VLC Player - Error state changed:', playerState.error);
+    }, [playerState.error]);
+
     return (
         <View style={styles.container}>
-            {/* Only render VLCPlayer if a stream is selected */}
-            {!noStreamSelected && (
+            {/* Only render VLCPlayer if a stream is selected and no error */}
+            {!noStreamSelected && !playerState.error && (
                 <VLCPlayer
                     key={playerState.playerKey}
                     ref={playerRef}
@@ -598,36 +661,49 @@ const VlcMediaPlayerComponent: React.FC<ExtendedMediaPlayerProps> = ({
                 />
             )}
 
-            <ErrorDisplay
-                error={playerState.error}
-                onBack={handleBack}
-                onRetry={() => {
-                    playerState.setError(null);
-                    playerState.setIsReady(false);
-                    playerState.setIsBuffering(true);
-                    playerState.setHasStartedPlaying(false);
-                    playerState.setPlayerKey(prev => prev + 1);
-                }}
-            />
+            {!playerState.error && (
+                <>
+                    <ArtworkBackground
+                        artwork={artwork}
+                        isBuffering={playerState.isBuffering}
+                        hasStartedPlaying={playerState.hasStartedPlaying}
+                        error={!!playerState.error}
+                    />
 
-            <ArtworkBackground
-                artwork={artwork}
-                isBuffering={playerState.isBuffering}
-                hasStartedPlaying={playerState.hasStartedPlaying}
-                error={!!playerState.error}
-            />
+                    <WaitingLobby
+                        noStreamSelected={noStreamSelected}
+                        hasStartedPlaying={playerState.hasStartedPlaying}
+                        opacity={animations.bufferOpacity}
+                        error={!!playerState.error}
+                    />
 
-            <WaitingLobby
-                noStreamSelected={noStreamSelected}
-                hasStartedPlaying={playerState.hasStartedPlaying}
-                opacity={animations.bufferOpacity}
-                error={!!playerState.error}
-            />
+                    <TouchableOpacity style={styles.touchArea} activeOpacity={1} onPress={handleOverlayPress} />
 
-            <TouchableOpacity style={styles.touchArea} activeOpacity={1} onPress={handleOverlayPress} />
+                    {!noStreamSelected && (
+                        <SubtitleDisplay subtitle={subtitleState.currentSubtitle} error={!!playerState.error} />
+                    )}
+                </>
+            )}
 
-            {!noStreamSelected && (
-                <SubtitleDisplay subtitle={subtitleState.currentSubtitle} error={!!playerState.error} />
+            {playerState.error && (
+
+                <ErrorDisplay
+                    error={playerState.error}
+                    onBack={handleBack}
+                    onRetry={() => {
+                        console.log('Retry button pressed');
+                        playerState.setError(null);
+                        playerState.setIsReady(false);
+                        playerState.setIsBuffering(true);
+                        playerState.setHasStartedPlaying(false);
+
+                        // Reset timing refs
+                        loadTimeRef.current = 0;
+                        hasPlayedRef.current = false;
+
+                        playerState.setPlayerKey(prev => prev + 1);
+                    }}
+                />
             )}
 
             {uiState.showControls && (
