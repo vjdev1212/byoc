@@ -1,7 +1,7 @@
 {
   "name": "BYOC",
   "identifier": "com.vijayyuvi.byoc",
-  "subtitle": "Bring your own content for streaming",
+  "subtitle": "BYOC - Bring your own content",
   "description": "BYOC is your ultimate streaming companion, offering a simple and elegant way to explore and watch movies and TV shows with your own contents.",
   "iconURL": "https://raw.githubusercontent.com/vjdev1212/byoc/refs/heads/main/assets/images/icon.png",
   "headerURL": "https://raw.githubusercontent.com/vjdev1212/byoc/refs/heads/main/assets/banners/BYOC-feature-graphic.png",
@@ -15,7 +15,7 @@
       "name": "BYOC",
       "bundleIdentifier": "com.vijayyuvi.byoc",
       "developerName": "vjdev1212",
-      "subtitle": "BYOC - Bring your own content for streaming.",
+      "subtitle": "BYOC - Bring your own content",
       "localizedDescription": "BYOC is your ultimate streaming companion, offering a simple and elegant way to explore and watch movies and TV shows with your own contents.",
       "iconURL": "https://raw.githubusercontent.com/vjdev1212/byoc/refs/heads/main/assets/images/icon.png",
       "downloadURL": "https://github.com/vjdev1212/byoc/releases/download/v1.0.0/EmbedIn_v1.0.0.ipa",
