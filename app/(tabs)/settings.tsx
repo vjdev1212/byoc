@@ -16,7 +16,7 @@ const SettingsScreen = () => {
 
   const contactList: { title: string, route: string, icon: keyof typeof Ionicons.glyphMap }[] = [
     { title: 'Contact', route: '/settings/contact', icon: 'mail-outline' },
-    { title: 'Support', route: '/settings/donate', icon: 'cash-outline' },
+    { title: 'Support', route: '/settings/donate', icon: 'heart-outline' },
   ];
 
   const preferencesList: { title: string, route: string, icon: keyof typeof Ionicons.glyphMap }[] = [
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     height: StyleSheet.hairlineWidth,
     backgroundColor: 'rgba(42, 42, 42, 0.5)',
   },
-   versionContainer: {
+  versionContainer: {
     paddingVertical: 5,
     flexDirection: 'row',
     justifyContent: 'center',
