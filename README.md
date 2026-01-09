@@ -13,7 +13,7 @@ This app is built using the Expo React Native framework.
 1. Clone the repository:
    ```sh
    git clone https://github.com/vjdev1212/byoc.git
-   cd vidsrcstream
+   cd byoc
    ```
 2. Create a `.env` file in the project root and set the TMDB API Key:
    ```cmd
@@ -36,7 +36,7 @@ To stop the running process, press `Ctrl + C` in the terminal.
 
 ## URL Templates
 
-BYOC allows you to use your own streaming service, Stremio addons, or create your own custom backend. The app is flexible and only requires specific metadata to fetch streams.
+BYOC allows you to use your own streaming service with your own custom backend. The app is flexible and only requires specific metadata to fetch streams.
 
 ### Required Information
 
